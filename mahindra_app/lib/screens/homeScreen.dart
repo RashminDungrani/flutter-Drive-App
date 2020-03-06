@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mahindra_app/screens/secondScreen.dart';
+import 'package:mahindra_app/screens/insideDir.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -32,12 +32,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => SecondScreen(),
+                      builder: (context) =>
+                          InsideDir(dirName: '${_manualsList[index]}'),
                       // Pass the arguments as part of the RouteSettings. The
                       // DetailScreen reads the arguments from these settings.
-                      settings: RouteSettings(
-                        arguments: index,
-                      ),
+                      // settings: RouteSettings(
+                      //   arguments: index,
+                      // ),
                     ),
                   );
                 }),
