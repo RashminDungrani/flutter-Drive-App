@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "986433851851",
+    "firebase_url": "https://drive-app-15286.firebaseio.com",
+    "project_id": "drive-app-15286",
+    "storage_bucket": "drive-app-15286.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:986433851851:android:cb6af90ef0b432cf42a64e",
+        "android_client_info": {
+          "package_name": "com.example.drive"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "986433851851-44oqphq2pe593el0dsa400v7n728pt3f.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDrb2-XUO69v7l-_feuH_6octdM50ZdsVY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "986433851851-44oqphq2pe593el0dsa400v7n728pt3f.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,8 +1,14 @@
+//TODO: Add google_service file and implement in this project
+//TODO: Upload Direcotory name to Firebase
+//TODO: Upload inside Direcotories into Current Page
+//TODO: Fetch Data From Firebase when uploading new Folder or Navigating new Screen
 //TODO: Add Files to Current Page After All Folders with Files View
 //TODO: Add Firebase Storage
 //TODO: Add Multiple Delete option
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:mahindra_app/services/crud.dart';
 
 class InsideDir extends StatefulWidget {
   final String dirName;
@@ -13,12 +19,24 @@ class InsideDir extends StatefulWidget {
 
 class _InsideDirState extends State<InsideDir> {
   static TextEditingController _textFieldController = TextEditingController();
+  QuerySnapshot dirs;
+  CrudMedthods crudObj = new CrudMedthods();
 
   // List<String> _plcs = ["Simense", "Attoy Bruy", "Another One"];
   // List<String> _drives = ["Servers", "Drives", "Another One"];
   // List<String> _visionCommands = ["list item1", "list item 2", "list item 3"];
   // List<String> _daiChiCommands = ["list item1", "list item 2", "list item 4"];
   List<String> _currentList = [];
+
+  @override
+  void initState() {
+    crudObj.getData().then((results) {
+      setState(() {
+        dirs = results;
+      });
+    });
+    super.initState();
+  }
 
   Widget build(BuildContext context) {
     // switch (widget.dirName) {
@@ -110,67 +128,67 @@ class _InsideDirState extends State<InsideDir> {
     }
 
     Widget bodyBuilder(BuildContext context) {
-      if (_currentList.length == 0) {
-        return Center(child: Text("No Items Found"));
-      }
-      return Container(
-        padding: EdgeInsets.all(8),
-        child: GridView.count(
-            childAspectRatio: 2.9,
-            crossAxisCount: 2,
-            children: List.generate(
-              _currentList.length,
-              (index) {
-                if ('${_currentList[index]}'.length > 12) {}
-                return Container(
-                  padding: EdgeInsets.all(7),
-                  child: InkWell(
-                    child: Row(
-                      children: <Widget>[
-                        Padding(
-                          padding: const EdgeInsets.only(left: 13.0),
-                          child: Icon(
-                            Icons.folder,
-                            size: 30.0,
+      if (dirs != null) {
+        return Container(
+          padding: EdgeInsets.all(8),
+          child: GridView.count(
+              childAspectRatio: 2.9,
+              crossAxisCount: 2,
+              children: List.generate(
+                dirs.documents.length,
+                (index) {
+                  return Container(
+                    padding: EdgeInsets.all(7),
+                    child: InkWell(
+                      child: Row(
+                        children: <Widget>[
+                          Padding(
+                            padding: const EdgeInsets.only(left: 13.0),
+                            child: Icon(
+                              Icons.folder,
+                              size: 30.0,
+                            ),
                           ),
-                        ),
-                        Flexible(
-                          child: Container(
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 8.0),
-                              child: Text(
-                                ('${_currentList[index]}'),
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 19),
+                          Flexible(
+                            child: Container(
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 8.0),
+                                child: Text(
+                                  (dirs.documents[index].data['dir1']),
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(fontSize: 19),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                InsideDir(dirName: '${_currentList[index]}'),
+                            // Pass the arguments as part of the RouteSettings. The
+                            // DetailScreen reads the arguments from these settings.
+                            // settings: RouteSettings(
+                            //   arguments: index,
+                            // ),
+                          ),
+                        );
+                      },
+                      onLongPress: () {
+                        print("object");
+                        _changeAppbar();
+                      },
                     ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              InsideDir(dirName: '${_currentList[index]}'),
-                          // Pass the arguments as part of the RouteSettings. The
-                          // DetailScreen reads the arguments from these settings.
-                          // settings: RouteSettings(
-                          //   arguments: index,
-                          // ),
-                        ),
-                      );
-                    },
-                    onLongPress: () {
-                      print("object");
-                      _changeAppbar();
-                    },
-                  ),
-                );
-              },
-            )),
-      );
+                  );
+                },
+              )),
+        );
+      } else {
+        return Center(child: Text("No Items Found"));
+      }
     }
 
     return Scaffold(
@@ -190,8 +208,15 @@ class _InsideDirState extends State<InsideDir> {
       // ),
 
       body: bodyBuilder(context),
+
       floatingActionButton: FloatingActionButton(
-        onPressed: null,
+        onPressed: () {
+          crudObj.getData().then((results) {
+            setState(() {
+              dirs = results;
+            });
+          });
+        },
         child: Icon(Icons.file_upload),
         tooltip: "Upload Files",
       ),
