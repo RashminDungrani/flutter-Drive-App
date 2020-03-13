@@ -14,7 +14,7 @@ class CrudMedthods {
 
   Future<void> addData(carData) async {
     // if (isLoggedIn()) {
-    Firestore.instance.collection('dirNames').add(carData).catchError((e) {
+    Firestore.instance.collection('Folders').add(carData).catchError((e) {
       print(e);
     });
     // } else {
@@ -23,6 +23,6 @@ class CrudMedthods {
   }
 
   getData() async {
-    return await Firestore.instance.collection('dirNames').getDocuments();
+    return await Firestore.instance.collection('subFolder').getDocuments();
   }
 }

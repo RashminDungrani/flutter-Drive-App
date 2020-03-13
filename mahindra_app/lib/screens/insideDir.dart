@@ -1,4 +1,6 @@
-//TODO: Add google_service file and implement in this project
+//TODO: Naviagte to Different Directory using FireStore Database
+//TODO: Create Document in FireStore from UI
+
 //TODO: Upload Direcotory name to Firebase
 //TODO: Upload inside Direcotories into Current Page
 //TODO: Fetch Data From Firebase when uploading new Folder or Navigating new Screen
@@ -7,6 +9,7 @@
 //TODO: Add Multiple Delete option
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:mahindra_app/services/crud.dart';
 
@@ -21,7 +24,7 @@ class _InsideDirState extends State<InsideDir> {
   static TextEditingController _textFieldController = TextEditingController();
   QuerySnapshot dirs;
   CrudMedthods crudObj = new CrudMedthods();
-
+  final databaseReference = FirebaseDatabase.instance.reference();
   // List<String> _plcs = ["Simense", "Attoy Bruy", "Another One"];
   // List<String> _drives = ["Servers", "Drives", "Another One"];
   // List<String> _visionCommands = ["list item1", "list item 2", "list item 3"];
@@ -154,7 +157,7 @@ class _InsideDirState extends State<InsideDir> {
                               child: Padding(
                                 padding: const EdgeInsets.only(left: 8.0),
                                 child: Text(
-                                  (dirs.documents[index].data['dir1']),
+                                  (dirs.documents[index].documentID),
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(fontSize: 19),
                                 ),
@@ -211,15 +214,18 @@ class _InsideDirState extends State<InsideDir> {
 
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          crudObj.getData().then((results) {
-            setState(() {
-              dirs = results;
-            });
-          });
+          getData();
         },
         child: Icon(Icons.file_upload),
         tooltip: "Upload Files",
       ),
     );
+  }
+
+  void getData() {
+    print("object");
+    databaseReference.once().then((DataSnapshot snapshot) {
+      print('Data : ${snapshot.value}');
+    });
   }
 }
