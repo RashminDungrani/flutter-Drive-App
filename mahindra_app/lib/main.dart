@@ -9,13 +9,24 @@ void main() => runApp(MyApp());
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return
+//     MaterialApp(
+//   theme: ThemeData(
+//     brightness: Brightness.light,
+//     primaryColor: Colors.red,
+//   ),
+//   darkTheme: ThemeData(
+//     brightness: Brightness.dark,
+//   ),
+// );
+
+        MaterialApp(
       title: 'Mahindra App',
       theme: ThemeData(
-        primarySwatch: Colors.green,
+        primarySwatch: Colors.blueGrey,
       ),
       home: MyHomePage(),
-      debugShowCheckedModeBanner: false,
+      // debugShowCheckedModeBanner: false,
     );
   }
 }

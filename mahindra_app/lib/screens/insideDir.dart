@@ -1,43 +1,43 @@
-//TODO: Naviagte to Different Directory using FireStore Database
-//TODO: Create Document in FireStore from UI
-
-//TODO: Upload Direcotory name to Firebase
-//TODO: Upload inside Direcotories into Current Page
-//TODO: Fetch Data From Firebase when uploading new Folder or Navigating new Screen
-//TODO: Add Files to Current Page After All Folders with Files View
-//TODO: Add Firebase Storage
 //TODO: Add Multiple Delete option
 
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mahindra_app/services/crud.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:file_picker/file_picker.dart';
 
 class InsideDir extends StatefulWidget {
   final String dirName;
+  final String currentLocation;
+
   @override
   _InsideDirState createState() => _InsideDirState();
-  InsideDir({Key key, @required this.dirName}) : super(key: key);
+  InsideDir({Key key, @required this.dirName, @required this.currentLocation})
+      : super(key: key);
 }
 
 class _InsideDirState extends State<InsideDir> {
   static TextEditingController _textFieldController = TextEditingController();
   QuerySnapshot dirs;
   CrudMedthods crudObj = new CrudMedthods();
-  final databaseReference = FirebaseDatabase.instance.reference();
-  // List<String> _plcs = ["Simense", "Attoy Bruy", "Another One"];
-  // List<String> _drives = ["Servers", "Drives", "Another One"];
-  // List<String> _visionCommands = ["list item1", "list item 2", "list item 3"];
-  // List<String> _daiChiCommands = ["list item1", "list item 2", "list item 4"];
-  List<String> _currentList = [];
+  Map<String, String> _paths;
+  String _extension;
+  FileType _pickType = FileType.custom;
+  GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
+  List<StorageUploadTask> _tasks = <StorageUploadTask>[];
 
   @override
   void initState() {
-    crudObj.getData().then((results) {
+    print("From initState 👉  : " + widget.currentLocation);
+    crudObj.getData(widget.currentLocation).then((results) {
       setState(() {
         dirs = results;
       });
     });
+
     super.initState();
   }
 
@@ -59,9 +59,12 @@ class _InsideDirState extends State<InsideDir> {
     //   default:
     //     _currentList = _currentList;
     // }
+
     _onAdd() {
-      setState(() {
-        _currentList.add(_textFieldController.text);
+      crudObj
+          .addFolder(widget.currentLocation, _textFieldController.text)
+          .then((results) {
+        initState();
       });
     }
 
@@ -88,9 +91,12 @@ class _InsideDirState extends State<InsideDir> {
                 new FlatButton(
                   child: new Text('Add'),
                   onPressed: () {
-                    _onAdd();
-                    Navigator.of(context).pop();
-                    _textFieldController.clear();
+                    if (_textFieldController.text != "" &&
+                        _textFieldController != null) {
+                      _onAdd();
+                      Navigator.of(context).pop();
+                      _textFieldController.clear();
+                    }
                   },
                 ),
               ],
@@ -130,68 +136,139 @@ class _InsideDirState extends State<InsideDir> {
       });
     }
 
+    // Future<List<String>> getFilesNames() async {
+    //   String fileLocation = widget.currentLocation;
+    //   fileLocation = fileLocation
+    //       .replaceAll("collection", "")
+    //       .replaceAll("//", "/collection/");
+    //   var document = Firestore.instance.document(fileLocation);
+    //   List<String> fileNames = [];
+    //   document.get().then((value) {
+    //     for (String value in value.data.values) {
+    //       print(value);
+    //       fileNames.add(value);
+    //     }
+    //   });
+
+    //   return await fileNames;
+    // }
+
     Widget bodyBuilder(BuildContext context) {
+      bool isPDF(String nameOfFile) {
+        if (nameOfFile.startsWith("zzz@PDF_"))
+          return true;
+        else
+          return false;
+      }
+
       if (dirs != null) {
-        return Container(
-          padding: EdgeInsets.all(8),
-          child: GridView.count(
-              childAspectRatio: 2.9,
+        if (dirs.documents.length != 0) {
+          return Container(
+            padding: EdgeInsets.all(8),
+            child: GridView.count(
               crossAxisCount: 2,
+              childAspectRatio: 3,
               children: List.generate(
                 dirs.documents.length,
                 (index) {
-                  return Container(
-                    padding: EdgeInsets.all(7),
-                    child: InkWell(
-                      child: Row(
-                        children: <Widget>[
-                          Padding(
-                            padding: const EdgeInsets.only(left: 13.0),
-                            child: Icon(
-                              Icons.folder,
-                              size: 30.0,
-                            ),
+                  if (isPDF(dirs.documents[index].documentID)) {
+                    String pdfFileName = dirs.documents[index].documentID
+                        .replaceAll("zzz@PDF_", "");
+                    pdfFileName = pdfFileName + ".pdf";
+                    return Container(
+                        padding: EdgeInsets.all(7),
+                        child: InkWell(
+                          child: Row(
+                            children: <Widget>[
+                              Padding(
+                                padding: const EdgeInsets.only(left: 13.0),
+                                child: Icon(
+                                  Icons.picture_as_pdf,
+                                  color: Colors.red,
+                                  size: 30.0,
+                                ),
+                              ),
+                              Flexible(
+                                child: Container(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 8.0),
+                                    child: Text(
+                                      pdfFileName,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(fontSize: 19),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          Flexible(
-                            child: Container(
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 8.0),
-                                child: Text(
-                                  (dirs.documents[index].documentID),
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(fontSize: 19),
+                        ));
+                  } else {
+                    return Container(
+                      padding: EdgeInsets.all(7),
+                      child: InkWell(
+                        child: Row(
+                          children: <Widget>[
+                            Padding(
+                              padding: const EdgeInsets.only(left: 13.0),
+                              child: Icon(
+                                Icons.folder,
+                                color: Colors.blueGrey,
+                                size: 30.0,
+                              ),
+                            ),
+                            Flexible(
+                              child: Container(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 8.0),
+                                  child: Text(
+                                    (dirs.documents[index].documentID),
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(fontSize: 19),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => InsideDir(
+                                dirName: '${dirs.documents[index].documentID}',
+                                currentLocation: widget.currentLocation +
+                                    '/${dirs.documents[index].documentID}' +
+                                    '/collection',
+                              ),
+                            ),
+                          );
+                        },
+                        onLongPress: () {
+                          print("Deleting");
+                          crudObj
+                              .deleteFolder(widget.currentLocation,
+                                  '${dirs.documents[index].documentID}')
+                              .then((results) {
+                            print("Folder Deleted");
+                            initState();
+                          });
+                        },
                       ),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                InsideDir(dirName: '${_currentList[index]}'),
-                            // Pass the arguments as part of the RouteSettings. The
-                            // DetailScreen reads the arguments from these settings.
-                            // settings: RouteSettings(
-                            //   arguments: index,
-                            // ),
-                          ),
-                        );
-                      },
-                      onLongPress: () {
-                        print("object");
-                        _changeAppbar();
-                      },
-                    ),
-                  );
+                    );
+                  }
                 },
-              )),
-        );
+              ),
+            ),
+          );
+        } else {
+          return Center(child: Text("No Item Found"));
+        }
       } else {
-        return Center(child: Text("No Items Found"));
+        return Center(child: CircularProgressIndicator());
       }
+
+      // printAllFilesFromFirebase();
     }
 
     return Scaffold(
@@ -213,8 +290,8 @@ class _InsideDirState extends State<InsideDir> {
       body: bodyBuilder(context),
 
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          getData();
+        onPressed: () async {
+          openFileExplorer();
         },
         child: Icon(Icons.file_upload),
         tooltip: "Upload Files",
@@ -222,10 +299,91 @@ class _InsideDirState extends State<InsideDir> {
     );
   }
 
-  void getData() {
-    print("object");
-    databaseReference.once().then((DataSnapshot snapshot) {
-      print('Data : ${snapshot.value}');
+  openFileExplorer() async {
+    try {
+      _paths = await FilePicker.getMultiFilePath(
+          type: FileType.any, fileExtension: _extension);
+      uploadToFirebase();
+    } on PlatformException catch (e) {
+      print("Unsupported Opeation " + e.toString());
+    }
+    if (!mounted) {
+      return;
+    }
+  }
+
+  uploadToFirebase() {
+    if (_paths != null) {
+      _paths.forEach((fileName, filePath) {
+        upload(fileName, filePath, widget.currentLocation);
+        print(fileName.toString() + " : " + filePath.toString());
+      });
+    }
+  }
+
+  upload(fileName, filePath, firebaseDatabaseLocation) async {
+    _extension = fileName.toString().split('.').last;
+    firebaseDatabaseLocation =
+        firebaseDatabaseLocation.replaceAll("/collection", "");
+    StorageReference storageReference = FirebaseStorage.instance
+        .ref()
+        .child(firebaseDatabaseLocation + "/" + fileName);
+    storageReference.putFile(
+        File(filePath), StorageMetadata(contentType: 'ANY/$_extension'));
+    _onPDFAdd(fileName);
+    // setState(() {
+    //   _tasks.add(uploadTask);
+
+    //   final String url = await storageReference.getDownloadURL();
+    //   downloadFile(storageReference, url);
+    // });
+
+    // * Generate Download URL
+    // final StorageTaskSnapshot downloadUrl = (await uploadTask.onComplete);
+    // final String url = (await downloadUrl.ref.getDownloadURL());
+
+    // print("URL is $url");
+
+//     I/flutter ( 7480): T.Y.B.C.A. Sem-6 _February - 2019_Computer Graphics.pdf : /data/user/0/com.example.drive/cache/T.Y.B.C.A. Sem-6 _February - 2019_Computer Graphics.pdf
+// W/StorageUtil( 7480): no auth token for request
+// W/NetworkRequest( 7480): no auth token for request
+// I/flutter ( 7480): URL is https://firebasestorage.googleapis.com/v0/b/drive-app-15286.appspot.com/o/T.Y.B.C.A.%20Sem-6%20_February%20-%202019_Computer%20Graphics.pdf?alt=media&token=f0c45c90-fe5d-47c3-b701-b754a68707bf
+  }
+
+  _onPDFAdd(String fullPDFname) {
+    fullPDFname = fullPDFname.replaceAll(".pdf", "");
+    fullPDFname = "zzz@PDF_" + fullPDFname;
+    crudObj.addFolder(widget.currentLocation, fullPDFname).then((results) {
+      initState();
     });
   }
+
+  // downloadFile(StorageReference ref, String url) async {
+  //   // final String url = await ref.getDownloadURL();
+  //   final http.Response downloadData = await http.get(url);
+  //   final Directory systemTempDir = Directory.systemTemp;
+  //   final File tempFile = File('${systemTempDir.path}/tmp.pdf');
+  //   if (tempFile.existsSync()) {
+  //     await tempFile.delete();
+  //   }
+  //   await tempFile.create();
+  //   final StorageFileDownloadTask task = ref.writeToFile(tempFile);
+  //   final int byteCount = (await task.future).totalByteCount;
+  //   var bodyBytes = downloadData.bodyBytes;
+  //   final String name = await ref.getName();
+  //   final String path = await ref.getPath();
+  //   print(
+  //       "Success\nDownloaded: $name\nUrl: $url\nPath: $path\nByte Count: $byteCount");
+  //   _scaffoldKey.currentState.showSnackBar(SnackBar(
+  //     backgroundColor: Colors.white,
+  //     content: Image.memory(bodyBytes, fit: BoxFit.fill),
+  //   ));
+  // }
+
+  // void getData() {
+  //   print("object");
+  //   databaseReference.once().then((DataSnapshot snapshot) {
+  //     print('Data : ${snapshot.value}');
+  //   });
+  // }
 }

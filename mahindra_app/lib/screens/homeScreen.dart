@@ -11,7 +11,7 @@ class _HomeScreenState extends State<HomeScreen> {
     "PLCs",
     "Drives",
     "Vision Commands",
-    "Dai-Chi Commands",
+    "Dai Chi Commands",
   ];
   @override
   Widget build(BuildContext context) {
@@ -32,8 +32,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          InsideDir(dirName: '${_manualsList[index]}'),
+                      builder: (context) => InsideDir(
+                        dirName: '${_manualsList[index]}',
+                        currentLocation:
+                            "Folders/${_manualsList[index]}/collection",
+                      ),
                       // Pass the arguments as part of the RouteSettings. The
                       // DetailScreen reads the arguments from these settings.
                       // settings: RouteSettings(
