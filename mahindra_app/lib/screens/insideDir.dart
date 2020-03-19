@@ -1,3 +1,10 @@
+//TODO: Download File to view offline From app pdf
+//TODO: Delete Files and Folder in FStorage inside Folder When Folder is delete
+//TODO: Add Search Option of Files and Folders
+//TODO: onLongPress Show Alert Box "Are you Sure" and then delete file or Folder if input is yes (true)
+//TODO: Add CircularProgressIndicator when Downloading File from FStorage or Upload to FStorage
+//TODO: Make Better Ui of home Screen
+//TODO: Pull Down To refresh
 //TODO: Add Multiple Delete option
 
 import 'dart:io';
@@ -8,6 +15,7 @@ import 'package:flutter/services.dart';
 import 'package:mahindra_app/services/crud.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:open_file/open_file.dart';
 
 class InsideDir extends StatefulWidget {
   final String dirName;
@@ -25,13 +33,13 @@ class _InsideDirState extends State<InsideDir> {
   CrudMedthods crudObj = new CrudMedthods();
   Map<String, String> _paths;
   String _extension;
-  FileType _pickType = FileType.custom;
+  // FileType _pickType = FileType.custom;
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
   List<StorageUploadTask> _tasks = <StorageUploadTask>[];
 
   @override
   void initState() {
-    print("From initState 👉  : " + widget.currentLocation);
+    // print("From initState 👉  : " + widget.currentLocation);
     crudObj.getData(widget.currentLocation).then((results) {
       setState(() {
         dirs = results;
@@ -39,6 +47,19 @@ class _InsideDirState extends State<InsideDir> {
     });
 
     super.initState();
+  }
+
+  Future<void> lauuchPdf() async {
+    // /sdcard/dart_programming_tutorial.pdf
+    // forceSafariVC: false,
+    //     forceWebView: false
+    // await launch(
+    //   "sdcard/dart_programming_tutorial.pdf",
+    // );
+    final result = await OpenFile.open("/sdcard/dart_programming_tutorial.pdf");
+
+    String openResult = "type=${result.type}  message=${result.message}";
+    print(openResult.toString());
   }
 
   Widget build(BuildContext context) {
@@ -202,6 +223,48 @@ class _InsideDirState extends State<InsideDir> {
                               ),
                             ],
                           ),
+                          onTap: () async {
+                            print("Downloading");
+
+                            String firebaseDatabaseLocation = widget
+                                .currentLocation
+                                .replaceAll("/collection", "");
+                            StorageReference storageReference = FirebaseStorage
+                                .instance
+                                .ref()
+                                .child(firebaseDatabaseLocation +
+                                    "/" +
+                                    pdfFileName);
+
+                            crudObj
+                                .downloadFile(storageReference)
+                                .then((results) {});
+                            // final String url =
+                            //     await storageReference.getDownloadURL();
+                            // print("😡   " + url);
+                            // launch(
+                            //     "https://firebasestorage.googleapis.com/v0/b/drive-app-15286.appspot.com/o/Folders%2FPLCs%2FResume.pdf?alt=media&token=fe62901a-91d7-4d87-a482-07df8501662d");
+                          },
+                          onLongPress: () async {
+                            String firebaseDatabaseLocation = widget
+                                .currentLocation
+                                .replaceAll("/collection", "");
+                            StorageReference storageReference = FirebaseStorage
+                                .instance
+                                .ref()
+                                .child(firebaseDatabaseLocation +
+                                    "/" +
+                                    pdfFileName);
+                            storageReference.delete();
+                            print("Deleting");
+                            crudObj
+                                .deleteFolder(widget.currentLocation,
+                                    '${dirs.documents[index].documentID}')
+                                .then((results) {
+                              print("Folder File");
+                              initState();
+                            });
+                          },
                         ));
                   } else {
                     return Container(
@@ -292,6 +355,7 @@ class _InsideDirState extends State<InsideDir> {
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           openFileExplorer();
+          // lauuchPdf();
         },
         child: Icon(Icons.file_upload),
         tooltip: "Upload Files",
@@ -302,7 +366,7 @@ class _InsideDirState extends State<InsideDir> {
   openFileExplorer() async {
     try {
       _paths = await FilePicker.getMultiFilePath(
-          type: FileType.any, fileExtension: _extension);
+          type: FileType.custom, fileExtension: "pdf");
       uploadToFirebase();
     } on PlatformException catch (e) {
       print("Unsupported Opeation " + e.toString());
@@ -328,8 +392,8 @@ class _InsideDirState extends State<InsideDir> {
     StorageReference storageReference = FirebaseStorage.instance
         .ref()
         .child(firebaseDatabaseLocation + "/" + fileName);
-    storageReference.putFile(
-        File(filePath), StorageMetadata(contentType: 'ANY/$_extension'));
+    storageReference.putFile(File(filePath),
+        StorageMetadata(contentType: 'application/$_extension'));
     _onPDFAdd(fileName);
     // setState(() {
     //   _tasks.add(uploadTask);
