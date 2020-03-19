@@ -49,19 +49,6 @@ class _InsideDirState extends State<InsideDir> {
     super.initState();
   }
 
-  Future<void> lauuchPdf() async {
-    // /sdcard/dart_programming_tutorial.pdf
-    // forceSafariVC: false,
-    //     forceWebView: false
-    // await launch(
-    //   "sdcard/dart_programming_tutorial.pdf",
-    // );
-    final result = await OpenFile.open("/sdcard/dart_programming_tutorial.pdf");
-
-    String openResult = "type=${result.type}  message=${result.message}";
-    print(openResult.toString());
-  }
-
   Widget build(BuildContext context) {
     // switch (widget.dirName) {
     //   case 'PLCs':
