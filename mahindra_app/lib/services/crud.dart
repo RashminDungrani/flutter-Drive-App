@@ -93,4 +93,40 @@ class CrudMedthods {
   getData(String currentLocation) async {
     return await Firestore.instance.collection(currentLocation).getDocuments();
   }
+
+  Future<Map<String, int>> getTimeStamps(String currentLocation) async {
+    Map<String, int> timeMillis = {};
+    QuerySnapshot dirs =
+        await Firestore.instance.collection(currentLocation).getDocuments();
+    if (dirs.documents.length > 0) {
+      bool isPDF(String nameOfFile) {
+        if (nameOfFile.startsWith("zzz@PDF_"))
+          return true;
+        else
+          return false;
+      }
+
+      for (var index = 0; index < dirs.documents.length; index++) {
+        if (isPDF(dirs.documents[index].documentID)) {
+          String pdfFileName =
+              dirs.documents[index].documentID.replaceAll("zzz@PDF_", "");
+          pdfFileName = pdfFileName + ".pdf";
+          String firebaseDatabaseLocation =
+              currentLocation.replaceAll("/collection", "");
+          StorageReference storageReference = FirebaseStorage.instance
+              .ref()
+              .child(firebaseDatabaseLocation + "/" + pdfFileName);
+          var metadataUploadedFile = await storageReference
+              .getMetadata(); //! Problem is when i add new pdf then it try to get metadata of file that is not uploaded yest so i need to wait till file i upload then called initState()
+          int varvar =
+              int.parse(metadataUploadedFile.updatedTimeMillis.toString());
+
+          timeMillis[dirs.documents[index].documentID] = varvar;
+          print(timeMillis.toString());
+        }
+      }
+      return timeMillis;
+    }
+    return timeMillis;
+  }
 }

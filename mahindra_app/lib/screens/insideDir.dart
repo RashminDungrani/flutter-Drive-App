@@ -15,7 +15,8 @@ import 'package:flutter/services.dart';
 import 'package:mahindra_app/services/crud.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:open_file/open_file.dart';
+import 'package:intl/intl.dart';
+import 'package:progress_dialog/progress_dialog.dart';
 
 class InsideDir extends StatefulWidget {
   final String dirName;
@@ -28,46 +29,37 @@ class InsideDir extends StatefulWidget {
 }
 
 class _InsideDirState extends State<InsideDir> {
+  ProgressDialog pr;
   static TextEditingController _textFieldController = TextEditingController();
   QuerySnapshot dirs;
+  Map<String, int> timeMillis;
   CrudMedthods crudObj = new CrudMedthods();
   Map<String, String> _paths;
-  String _extension;
+
+  // String _extension;
   // FileType _pickType = FileType.custom;
-  GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
-  List<StorageUploadTask> _tasks = <StorageUploadTask>[];
+  // GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
+  // List<StorageUploadTask> _tasks = <StorageUploadTask>[];
 
   @override
-  void initState() {
-    // print("From initState 👉  : " + widget.currentLocation);
+  initState() {
     crudObj.getData(widget.currentLocation).then((results) {
       setState(() {
         dirs = results;
+        print(dirs);
       });
     });
-
-    super.initState();
+    crudObj.getTimeStamps(widget.currentLocation).then((results) {
+      setState(() {
+        timeMillis = results;
+      });
+      super.initState();
+    });
   }
 
   Widget build(BuildContext context) {
-    // switch (widget.dirName) {
-    //   case 'PLCs':
-    //     _currentList = _plcs;
-    //     break;
-    //   case 'Drives':
-    //     _currentList = _drives;
-    //     break;
-    //   case 'Vision Commands':
-    //     _currentList = _visionCommands;
-    //     break;
-    //   case 'Dai-Chi Commands':
-    //     _currentList = _daiChiCommands;
-    //     break;
-
-    //   default:
-    //     _currentList = _currentList;
-    // }
-
+    pr = new ProgressDialog(context);
+    pr.style(message: 'Please wait...');
     _onAdd() {
       crudObj
           .addFolder(widget.currentLocation, _textFieldController.text)
@@ -144,22 +136,43 @@ class _InsideDirState extends State<InsideDir> {
       });
     }
 
-    // Future<List<String>> getFilesNames() async {
-    //   String fileLocation = widget.currentLocation;
-    //   fileLocation = fileLocation
-    //       .replaceAll("collection", "")
-    //       .replaceAll("//", "/collection/");
-    //   var document = Firestore.instance.document(fileLocation);
-    //   List<String> fileNames = [];
-    //   document.get().then((value) {
-    //     for (String value in value.data.values) {
-    //       print(value);
-    //       fileNames.add(value);
-    //     }
-    //   });
+    String getModifiedTime(int timestamp) {
+      var now = DateTime.now();
+      var today = DateTime(now.year, now.month, now.day);
+      var yesterday = DateTime(now.year, now.month, now.day - 1);
+      var format = DateFormat.yMMMMd('en_US');
+      var date = DateTime.fromMillisecondsSinceEpoch(timestamp);
+      var diff = now.difference(date);
+      var time = '';
 
-    //   return await fileNames;
-    // }
+      final aDate = DateTime(date.year, date.month, date.day);
+
+      if (diff.inSeconds <= 0 ||
+          diff.inSeconds > 0 && diff.inMinutes == 0 ||
+          diff.inMinutes > 0 && diff.inHours == 0 ||
+          diff.inHours > 0 && diff.inDays == 0) {
+        if (aDate == today) {
+          time = "Today " + DateFormat('HH:mm').format(date);
+        } else if (aDate == yesterday) {
+          time = "Yesterday " + DateFormat('HH:mm').format(date);
+        }
+        // time = DateFormat('HH:mm a').format(date);
+
+      } else if (diff.inDays > 0 && diff.inDays < 7) {
+        if (diff.inDays == 1) {
+          time = diff.inDays.toString() + ' DAY AGO';
+        } else {
+          time = diff.inDays.toString() + ' DAYS AGO';
+        }
+      } else {
+        if (diff.inDays == 7) {
+          time = (diff.inDays / 7).floor().toString() + ' WEEK AGO';
+        } else {
+          time = format.format(date);
+        }
+      }
+      return time;
+    }
 
     Widget bodyBuilder(BuildContext context) {
       bool isPDF(String nameOfFile) {
@@ -169,8 +182,8 @@ class _InsideDirState extends State<InsideDir> {
           return false;
       }
 
-      if (dirs != null) {
-        if (dirs.documents.length != 0) {
+      if (dirs != null && timeMillis != null) {
+        if (dirs.documents.length != 0 || timeMillis.isNotEmpty) {
           return Container(
             padding: EdgeInsets.all(8),
             child: GridView.count(
@@ -183,56 +196,66 @@ class _InsideDirState extends State<InsideDir> {
                     String pdfFileName = dirs.documents[index].documentID
                         .replaceAll("zzz@PDF_", "");
                     pdfFileName = pdfFileName + ".pdf";
+                    String firebaseDatabaseLocation =
+                        widget.currentLocation.replaceAll("/collection", "");
+                    StorageReference storageReference = FirebaseStorage.instance
+                        .ref()
+                        .child(firebaseDatabaseLocation + "/" + pdfFileName);
+                    int updatedTimeMillis =
+                        (timeMillis[dirs.documents[index].documentID]);
+                    print(updatedTimeMillis);
+                    var resultOfGetModifiedTime =
+                        getModifiedTime(updatedTimeMillis);
+
                     return Container(
                         padding: EdgeInsets.all(7),
                         child: InkWell(
-                          child: Row(
-                            children: <Widget>[
-                              Padding(
-                                padding: const EdgeInsets.only(left: 13.0),
-                                child: Icon(
-                                  Icons.picture_as_pdf,
-                                  color: Colors.red,
-                                  size: 30.0,
-                                ),
-                              ),
-                              Flexible(
-                                child: Container(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 8.0),
-                                    child: Text(
-                                      pdfFileName,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(fontSize: 19),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                          // child: Row(
+                          //   children: <Widget>[
+                          //     Padding(
+                          //       padding: const EdgeInsets.only(left: 13.0),
+                          //       child: Icon(
+                          //         Icons.picture_as_pdf,
+                          //         color: Colors.red,
+                          //         size: 30.0,
+                          //       ),
+                          //     ),
+                          //     Flexible(
+                          //       child: Container(
+                          //         child: Padding(
+                          //           padding: const EdgeInsets.only(left: 8.0),
+                          //           child: Text(
+                          //             pdfFileName,
+                          //             overflow: TextOverflow.ellipsis,
+                          //             style: TextStyle(fontSize: 19),
+                          //           ),
+                          //         ),
+                          //       ),
+                          //     ),
+                          //   ],
+                          // ),
+
+                          child: ListTile(
+                            leading: Icon(
+                              Icons.picture_as_pdf,
+                              color: Colors.red,
+                              size: 30.0,
+                            ),
+                            title: Text(
+                              pdfFileName,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 17),
+                            ),
+                            subtitle: Text(resultOfGetModifiedTime.toString()),
                           ),
                           onTap: () async {
                             print("Downloading");
 
-                            String firebaseDatabaseLocation = widget
-                                .currentLocation
-                                .replaceAll("/collection", "");
-                            StorageReference storageReference = FirebaseStorage
-                                .instance
-                                .ref()
-                                .child(firebaseDatabaseLocation +
-                                    "/" +
-                                    pdfFileName);
-
-                            crudObj
-                                .downloadFile(storageReference)
-                                .then((results) {});
-                            // final String url =
-                            //     await storageReference.getDownloadURL();
-                            // print("😡   " + url);
-                            // launch(
-                            //     "https://firebasestorage.googleapis.com/v0/b/drive-app-15286.appspot.com/o/Folders%2FPLCs%2FResume.pdf?alt=media&token=fe62901a-91d7-4d87-a482-07df8501662d");
+                            crudObj.downloadFile(storageReference);
+                            // .then((results) {});
                           },
                           onLongPress: () async {
+                            // TODO : Delete file in ExternalStorage Also
                             String firebaseDatabaseLocation = widget
                                 .currentLocation
                                 .replaceAll("/collection", "");
@@ -342,6 +365,7 @@ class _InsideDirState extends State<InsideDir> {
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           openFileExplorer();
+          // print(readTimestamp(1584703613549));
           // lauuchPdf();
         },
         child: Icon(Icons.file_upload),
@@ -351,62 +375,67 @@ class _InsideDirState extends State<InsideDir> {
   }
 
   openFileExplorer() async {
-    try {
-      _paths = await FilePicker.getMultiFilePath(
-          type: FileType.custom, fileExtension: "pdf");
-      uploadToFirebase();
-    } on PlatformException catch (e) {
-      print("Unsupported Opeation " + e.toString());
-    }
-    if (!mounted) {
-      return;
-    }
-  }
+    upload(fileName, filePath, firebaseDatabaseLocation) async {
+      firebaseDatabaseLocation =
+          firebaseDatabaseLocation.replaceAll("/collection", "");
+      StorageReference storageReference = FirebaseStorage.instance
+          .ref()
+          .child(firebaseDatabaseLocation + "/" + fileName);
 
-  uploadToFirebase() {
-    if (_paths != null) {
+      Future<void> uploadPDF() async {
+        final StorageUploadTask uploadTask = storageReference.putFile(
+            File(filePath),
+            StorageMetadata(
+                contentType:
+                    'application/pdf')); // TODO: Wait for this and Show Progress of Upload then move too next step
+        uploadTask.onComplete.then((_) {
+          _onPDFAdd(fileName);
+          storageReference.getMetadata().then((_) {
+            initState();
+            pr.hide();
+            // Navigator.push(
+            //   context,
+            //   MaterialPageRoute(
+            //     builder: (context) => InsideDir(
+            //         dirName: widget.dirName,
+            //         currentLocation: widget.currentLocation),
+            //   ),
+            // );
+          });
+        });
+      }
+
+      uploadPDF();
+    }
+
+    uploadToFirebase() {
+      pr.show();
+
       _paths.forEach((fileName, filePath) {
         upload(fileName, filePath, widget.currentLocation);
         print(fileName.toString() + " : " + filePath.toString());
       });
     }
+
+    try {
+      _paths = await FilePicker.getMultiFilePath(
+          type: FileType.custom, fileExtension: "pdf");
+      if (_paths != null) {
+        uploadToFirebase();
+      }
+      // initState();
+    } on PlatformException catch (e) {
+      print("Unsupported Opeation " + e.toString());
+    }
+    // if (!mounted) {
+    //   return;
+    // }
   }
 
-  upload(fileName, filePath, firebaseDatabaseLocation) async {
-    _extension = fileName.toString().split('.').last;
-    firebaseDatabaseLocation =
-        firebaseDatabaseLocation.replaceAll("/collection", "");
-    StorageReference storageReference = FirebaseStorage.instance
-        .ref()
-        .child(firebaseDatabaseLocation + "/" + fileName);
-    storageReference.putFile(File(filePath),
-        StorageMetadata(contentType: 'application/$_extension'));
-    _onPDFAdd(fileName);
-    // setState(() {
-    //   _tasks.add(uploadTask);
-
-    //   final String url = await storageReference.getDownloadURL();
-    //   downloadFile(storageReference, url);
-    // });
-
-    // * Generate Download URL
-    // final StorageTaskSnapshot downloadUrl = (await uploadTask.onComplete);
-    // final String url = (await downloadUrl.ref.getDownloadURL());
-
-    // print("URL is $url");
-
-//     I/flutter ( 7480): T.Y.B.C.A. Sem-6 _February - 2019_Computer Graphics.pdf : /data/user/0/com.example.drive/cache/T.Y.B.C.A. Sem-6 _February - 2019_Computer Graphics.pdf
-// W/StorageUtil( 7480): no auth token for request
-// W/NetworkRequest( 7480): no auth token for request
-// I/flutter ( 7480): URL is https://firebasestorage.googleapis.com/v0/b/drive-app-15286.appspot.com/o/T.Y.B.C.A.%20Sem-6%20_February%20-%202019_Computer%20Graphics.pdf?alt=media&token=f0c45c90-fe5d-47c3-b701-b754a68707bf
-  }
-
-  _onPDFAdd(String fullPDFname) {
+  _onPDFAdd(String fullPDFname) async {
     fullPDFname = fullPDFname.replaceAll(".pdf", "");
     fullPDFname = "zzz@PDF_" + fullPDFname;
-    crudObj.addFolder(widget.currentLocation, fullPDFname).then((results) {
-      initState();
-    });
+    crudObj.addFolder(widget.currentLocation, fullPDFname).then((_) {});
   }
 
   // downloadFile(StorageReference ref, String url) async {
