@@ -16,6 +16,10 @@ import 'package:mahindra_app/services/crud.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:open_file/open_file.dart';
+
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:progress_dialog/progress_dialog.dart';
 
 class InsideDir extends StatefulWidget {
@@ -46,15 +50,44 @@ class _InsideDirState extends State<InsideDir> {
     crudObj.getData(widget.currentLocation).then((results) {
       setState(() {
         dirs = results;
-        print(dirs);
+        // print(dirs);
       });
     });
     crudObj.getTimeStamps(widget.currentLocation).then((results) {
       setState(() {
         timeMillis = results;
       });
-      super.initState();
     });
+    super.initState();
+  }
+
+  Future<void> downloadFile1(StorageReference ref) async {
+    // final String url = await ref.getDownloadURL();
+    // final http.Response downloadData = await http.get(url);
+    final String fileName = await ref.getName();
+    // final String path = await ref.getPath();
+    // final Directory systemTempDir = Directory.systemTemp;
+    var documentDirectory = await getExternalStorageDirectory();
+    print("Directory :: " + documentDirectory.toString());
+    File createNewFile = new File(join(documentDirectory.path, fileName));
+    // print("😡  " + createNewFile.toString());
+    String locationOfNewFile =
+        createNewFile.toString().replaceAll("File: '", "").replaceAll("'", "");
+
+    // createNewFile.existsSync()
+    if (await File(locationOfNewFile).exists()) {
+      print("From Already Exist File");
+      await OpenFile.open(locationOfNewFile);
+    } else {
+      pr.show();
+      print("From Create new File");
+      await createNewFile.create().then((_) async {
+        await ref.writeToFile(createNewFile).future.then((_) async {
+          pr.hide();
+          await OpenFile.open(locationOfNewFile);
+        });
+      });
+    }
   }
 
   Widget build(BuildContext context) {
@@ -130,11 +163,11 @@ class _InsideDirState extends State<InsideDir> {
     );
     AppBar _appBar = _defaultBar;
 
-    _changeAppbar() {
-      setState(() {
-        _appBar = _appBar == _defaultBar ? _selectBar : _defaultBar;
-      });
-    }
+    // _changeAppbar() {
+    //   setState(() {
+    //     _appBar = _appBar == _defaultBar ? _selectBar : _defaultBar;
+    //   });
+    // }
 
     String getModifiedTime(int timestamp) {
       var now = DateTime.now();
@@ -203,7 +236,6 @@ class _InsideDirState extends State<InsideDir> {
                         .child(firebaseDatabaseLocation + "/" + pdfFileName);
                     int updatedTimeMillis =
                         (timeMillis[dirs.documents[index].documentID]);
-                    print(updatedTimeMillis);
                     var resultOfGetModifiedTime =
                         getModifiedTime(updatedTimeMillis);
 
@@ -251,7 +283,10 @@ class _InsideDirState extends State<InsideDir> {
                           onTap: () async {
                             print("Downloading");
 
-                            crudObj.downloadFile(storageReference);
+                            // crudObj.downloadFile(storageReference);
+
+                            downloadFile1(storageReference);
+
                             // .then((results) {});
                           },
                           onLongPress: () async {
@@ -382,7 +417,15 @@ class _InsideDirState extends State<InsideDir> {
           .ref()
           .child(firebaseDatabaseLocation + "/" + fileName);
 
-      Future<void> uploadPDF() async {
+      _onPDFAdd(String fullPDFname) {
+        fullPDFname = fullPDFname.replaceAll(".pdf", "");
+        fullPDFname = "zzz@PDF_" + fullPDFname;
+        crudObj.addFolder(widget.currentLocation, fullPDFname).then((_) {
+          // initState();
+        });
+      }
+
+      uploadPDF() {
         final StorageUploadTask uploadTask = storageReference.putFile(
             File(filePath),
             StorageMetadata(
@@ -390,18 +433,10 @@ class _InsideDirState extends State<InsideDir> {
                     'application/pdf')); // TODO: Wait for this and Show Progress of Upload then move too next step
         uploadTask.onComplete.then((_) {
           _onPDFAdd(fileName);
-          storageReference.getMetadata().then((_) {
-            initState();
-            pr.hide();
-            // Navigator.push(
-            //   context,
-            //   MaterialPageRoute(
-            //     builder: (context) => InsideDir(
-            //         dirName: widget.dirName,
-            //         currentLocation: widget.currentLocation),
-            //   ),
-            // );
-          });
+
+          pr.hide();
+          initState(); // ! FIX this :: wait for getting value of timestamp
+          // });
         });
       }
 
@@ -413,7 +448,6 @@ class _InsideDirState extends State<InsideDir> {
 
       _paths.forEach((fileName, filePath) {
         upload(fileName, filePath, widget.currentLocation);
-        print(fileName.toString() + " : " + filePath.toString());
       });
     }
 
@@ -430,12 +464,6 @@ class _InsideDirState extends State<InsideDir> {
     // if (!mounted) {
     //   return;
     // }
-  }
-
-  _onPDFAdd(String fullPDFname) async {
-    fullPDFname = fullPDFname.replaceAll(".pdf", "");
-    fullPDFname = "zzz@PDF_" + fullPDFname;
-    crudObj.addFolder(widget.currentLocation, fullPDFname).then((_) {});
   }
 
   // downloadFile(StorageReference ref, String url) async {
