@@ -1,8 +1,5 @@
 import 'dart:async';
-// import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 // import 'package:open_file/open_file.dart';
 // import 'package:path/path.dart';
 // import 'package:path_provider/path_provider.dart';
@@ -66,11 +63,19 @@ class CrudMedthods {
 // // file.writeAsBytesSync(response.bodyBytes);
 //   }
 
-  Future<void> addFolder(String currentLocation, String createDirName) async {
-    Firestore.instance
-        .collection(currentLocation)
-        .document(createDirName)
-        .setData({});
+  Future<void> addFolder(
+      String currentLocation, String createDirName, bool isFile) async {
+    if (isFile) {
+      Firestore.instance
+          .collection(currentLocation)
+          .document(createDirName)
+          .setData({"created_timestamp": Timestamp.now()});
+    } else {
+      Firestore.instance
+          .collection(currentLocation)
+          .document(createDirName)
+          .setData({});
+    }
   }
 
   Future<void> deleteFolder(
@@ -87,40 +92,5 @@ class CrudMedthods {
 
   getData(String currentLocation) async {
     return await Firestore.instance.collection(currentLocation).getDocuments();
-  }
-
-  Future<Map<String, int>> getTimeStamps(String currentLocation) async {
-    Map<String, int> timeMillis = {};
-    QuerySnapshot dirs =
-        await Firestore.instance.collection(currentLocation).getDocuments();
-    if (dirs.documents.length > 0) {
-      bool isPDF(String nameOfFile) {
-        if (nameOfFile.startsWith("zzz@PDF_"))
-          return true;
-        else
-          return false;
-      }
-
-      for (var index = 0; index < dirs.documents.length; index++) {
-        if (isPDF(dirs.documents[index].documentID)) {
-          String pdfFileName =
-              dirs.documents[index].documentID.replaceAll("zzz@PDF_", "");
-          pdfFileName = pdfFileName + ".pdf";
-          String firebaseDatabaseLocation =
-              currentLocation.replaceAll("/collection", "");
-          StorageReference storageReference = FirebaseStorage.instance
-              .ref()
-              .child(firebaseDatabaseLocation + "/" + pdfFileName);
-          var metadataUploadedFile = await storageReference
-              .getMetadata(); //! Problem is when i add new pdf then it try to get metadata of file that is not uploaded yest so i need to wait till file i upload then called initState()
-          int varvar =
-              int.parse(metadataUploadedFile.updatedTimeMillis.toString());
-
-          timeMillis[dirs.documents[index].documentID] = varvar;
-        }
-      }
-      return timeMillis;
-    }
-    return timeMillis;
   }
 }

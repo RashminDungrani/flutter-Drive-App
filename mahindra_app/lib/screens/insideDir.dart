@@ -1,11 +1,9 @@
-//TODO: Download File to view offline From app pdf
 //TODO: Delete Files and Folder in FStorage inside Folder When Folder is delete
 //TODO: Add Search Option of Files and Folders
 //TODO: onLongPress Show Alert Box "Are you Sure" and then delete file or Folder if input is yes (true)
-//TODO: Add CircularProgressIndicator when Downloading File from FStorage or Upload to FStorage
 //TODO: Make Better Ui of home Screen
 //TODO: Pull Down To refresh
-//TODO: Add Multiple Delete option
+//TODO: Add Multiple selection to long press for Delete operation
 
 import 'dart:io';
 
@@ -36,7 +34,7 @@ class _InsideDirState extends State<InsideDir> {
   ProgressDialog pr;
   static TextEditingController _textFieldController = TextEditingController();
   QuerySnapshot dirs;
-  Map<String, int> timeMillis;
+  // Map<String, int> timeMillis;
   CrudMedthods crudObj = new CrudMedthods();
   Map<String, String> _paths;
 
@@ -53,11 +51,7 @@ class _InsideDirState extends State<InsideDir> {
         // print(dirs);
       });
     });
-    crudObj.getTimeStamps(widget.currentLocation).then((results) {
-      setState(() {
-        timeMillis = results;
-      });
-    });
+
     super.initState();
   }
 
@@ -95,7 +89,7 @@ class _InsideDirState extends State<InsideDir> {
     pr.style(message: 'Please wait...');
     _onAdd() {
       crudObj
-          .addFolder(widget.currentLocation, _textFieldController.text)
+          .addFolder(widget.currentLocation, _textFieldController.text, false)
           .then((results) {
         initState();
       });
@@ -151,16 +145,16 @@ class _InsideDirState extends State<InsideDir> {
       ],
     );
 
-    AppBar _selectBar = AppBar(
-      title: Text(widget.dirName),
-      leading: Icon(Icons.close),
-      actions: <Widget>[
-        Icon(Icons.flag),
-        Icon(Icons.delete),
-        Icon(Icons.more_vert)
-      ],
-      backgroundColor: Colors.deepPurple,
-    );
+    // AppBar _selectBar = AppBar(
+    //   title: Text(widget.dirName),
+    //   leading: Icon(Icons.close),
+    //   actions: <Widget>[
+    //     Icon(Icons.flag),
+    //     Icon(Icons.delete),
+    //     Icon(Icons.more_vert)
+    //   ],
+    //   backgroundColor: Colors.deepPurple,
+    // );
     AppBar _appBar = _defaultBar;
 
     // _changeAppbar() {
@@ -169,12 +163,13 @@ class _InsideDirState extends State<InsideDir> {
     //   });
     // }
 
-    String getModifiedTime(int timestamp) {
+    String getConvertedTime(Timestamp timestamp) {
       var now = DateTime.now();
       var today = DateTime(now.year, now.month, now.day);
       var yesterday = DateTime(now.year, now.month, now.day - 1);
       var format = DateFormat.yMMMMd('en_US');
-      var date = DateTime.fromMillisecondsSinceEpoch(timestamp);
+      var date =
+          DateTime.fromMillisecondsSinceEpoch(timestamp.millisecondsSinceEpoch);
       var diff = now.difference(date);
       var time = '';
 
@@ -215,13 +210,17 @@ class _InsideDirState extends State<InsideDir> {
           return false;
       }
 
-      if (dirs != null && timeMillis != null) {
-        if (dirs.documents.length != 0 || timeMillis.isNotEmpty) {
+//  && timeMillis != null
+// || timeMillis.isNotEmpty
+      if (dirs != null) {
+        if (dirs.documents.length != 0) {
           return Container(
             padding: EdgeInsets.all(8),
-            child: GridView.count(
-              crossAxisCount: 2,
-              childAspectRatio: 3,
+            // ! Previous Code of Grid View
+            // GridView.count(
+            //   crossAxisCount: 2,
+            //   childAspectRatio: 3,
+            child: ListView(
               children: List.generate(
                 dirs.documents.length,
                 (index) {
@@ -234,10 +233,11 @@ class _InsideDirState extends State<InsideDir> {
                     StorageReference storageReference = FirebaseStorage.instance
                         .ref()
                         .child(firebaseDatabaseLocation + "/" + pdfFileName);
-                    int updatedTimeMillis =
-                        (timeMillis[dirs.documents[index].documentID]);
-                    var resultOfGetModifiedTime =
-                        getModifiedTime(updatedTimeMillis);
+                    Timestamp updatedTimeMillis =
+                        dirs.documents[index].data["created_timestamp"];
+                    // (timeMillis[dirs.documents[index].documentID]);
+                    var resultOfFileCreatedTime =
+                        getConvertedTime(updatedTimeMillis);
 
                     return Container(
                         padding: EdgeInsets.all(7),
@@ -278,16 +278,10 @@ class _InsideDirState extends State<InsideDir> {
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(fontSize: 17),
                             ),
-                            subtitle: Text(resultOfGetModifiedTime.toString()),
+                            subtitle: Text(resultOfFileCreatedTime.toString()),
                           ),
                           onTap: () async {
-                            print("Downloading");
-
-                            // crudObj.downloadFile(storageReference);
-
                             downloadFile1(storageReference);
-
-                            // .then((results) {});
                           },
                           onLongPress: () async {
                             // TODO : Delete file in ExternalStorage Also
@@ -315,29 +309,43 @@ class _InsideDirState extends State<InsideDir> {
                     return Container(
                       padding: EdgeInsets.all(7),
                       child: InkWell(
-                        child: Row(
-                          children: <Widget>[
-                            Padding(
-                              padding: const EdgeInsets.only(left: 13.0),
-                              child: Icon(
-                                Icons.folder,
-                                color: Colors.blueGrey,
-                                size: 30.0,
-                              ),
-                            ),
-                            Flexible(
-                              child: Container(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left: 8.0),
-                                  child: Text(
-                                    (dirs.documents[index].documentID),
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(fontSize: 19),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                        // ! Previous Code of Grid View
+                        // child: Row(
+                        //   children: <Widget>[
+                        //     Padding(
+                        //       padding: const EdgeInsets.only(left: 13.0),
+                        //       child: Icon(
+                        //         Icons.folder,
+                        //         color: Colors.blueGrey,
+                        //         size: 30.0,
+                        //       ),
+                        //     ),
+                        //     Flexible(
+                        //       child: Container(
+                        //         child: Padding(
+                        //           padding: const EdgeInsets.only(left: 8.0),
+                        //           child: Text(
+                        //             (dirs.documents[index].documentID),
+                        //             overflow: TextOverflow.ellipsis,
+                        //             style: TextStyle(fontSize: 19),
+                        //           ),
+                        //         ),
+                        //       ),
+                        //     ),
+                        //   ],
+                        // ),
+                        child: ListTile(
+                          leading: Icon(
+                            Icons.folder,
+                            color: Colors.blueGrey,
+                            size: 30.0,
+                          ),
+                          title: Text(
+                            dirs.documents[index].documentID,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 19),
+                          ),
+                          trailing: Icon(Icons.keyboard_arrow_right),
                         ),
                         onTap: () {
                           Navigator.push(
@@ -400,8 +408,6 @@ class _InsideDirState extends State<InsideDir> {
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           openFileExplorer();
-          // print(readTimestamp(1584703613549));
-          // lauuchPdf();
         },
         child: Icon(Icons.file_upload),
         tooltip: "Upload Files",
@@ -420,7 +426,7 @@ class _InsideDirState extends State<InsideDir> {
       _onPDFAdd(String fullPDFname) {
         fullPDFname = fullPDFname.replaceAll(".pdf", "");
         fullPDFname = "zzz@PDF_" + fullPDFname;
-        crudObj.addFolder(widget.currentLocation, fullPDFname).then((_) {
+        crudObj.addFolder(widget.currentLocation, fullPDFname, true).then((_) {
           // initState();
         });
       }
@@ -432,6 +438,7 @@ class _InsideDirState extends State<InsideDir> {
                 contentType:
                     'application/pdf')); // TODO: Wait for this and Show Progress of Upload then move too next step
         uploadTask.onComplete.then((_) {
+          // todo: add Current timestamp to
           _onPDFAdd(fileName);
 
           pr.hide();
