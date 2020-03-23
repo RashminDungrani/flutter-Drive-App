@@ -19,12 +19,15 @@ class MyApp extends StatelessWidget {
 // );
 
         MaterialApp(
-      title: 'Mahindra App',
+      title: 'Manuals',
       theme: ThemeData(
-        primarySwatch: Colors.blueGrey,
-      ),
+          primarySwatch: Colors.blueGrey,
+          pageTransitionsTheme: PageTransitionsTheme(builders: {
+            TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+            TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          })),
       home: MyHomePage(),
-      // debugShowCheckedModeBanner: false,
+      debugShowCheckedModeBanner: false,
     );
   }
 }
