@@ -19,38 +19,15 @@ class MyApp extends StatelessWidget {
 // );
 
         MaterialApp(
-      title: 'Manuals',
+      title: 'mahindra_app',
       theme: ThemeData(
           primarySwatch: Colors.blueGrey,
           pageTransitionsTheme: PageTransitionsTheme(builders: {
             TargetPlatform.android: CupertinoPageTransitionsBuilder(),
             TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
           })),
-      home: MyHomePage(),
+      home: HomeScreen(),
       debugShowCheckedModeBanner: false,
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  @override
-  _MyHomePageState createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Manuals'),
-        actions: <Widget>[
-          Padding(
-            padding: const EdgeInsets.only(right: 10.0),
-            child: Icon(Icons.search),
-          )
-        ],
-      ),
-      body: HomeScreen(),
     );
   }
 }

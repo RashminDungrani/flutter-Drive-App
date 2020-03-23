@@ -1,7 +1,7 @@
 //TODO: Delete Files and Folder in FStorage inside Folder When Folder is delete
+//TODO: Show Simple Notify text At bottom like other Apps
 //TODO: Add Search Option of Files and Folders
 //TODO: onLongPress Show Alert Box "Are you Sure" and then delete file or Folder if input is yes (true)
-//TODO: Make Better Ui of home Screen
 //TODO: Pull Down To refresh
 //TODO: Add Multiple selection to long press for Delete operation
 
@@ -188,9 +188,9 @@ class _InsideDirState extends State<InsideDir> {
 
       } else if (diff.inDays > 0 && diff.inDays < 7) {
         if (diff.inDays == 1) {
-          time = diff.inDays.toString() + ' DAY AGO';
+          time = diff.inDays.toString() + ' Day ago';
         } else {
-          time = diff.inDays.toString() + ' DAYS AGO';
+          time = diff.inDays.toString() + ' Days ago';
         }
       } else {
         if (diff.inDays == 7) {
@@ -203,11 +203,67 @@ class _InsideDirState extends State<InsideDir> {
     }
 
     Widget bodyBuilder(BuildContext context) {
-      bool isPDF(String nameOfFile) {
-        if (nameOfFile.startsWith("zzz@PDF_"))
+      // bool isPDF(String nameOfFile) {
+      //   if (nameOfFile.startsWith("zzz@PDF_"))
+      //     return true;
+      //   else
+      //     return false;
+      // }
+
+      bool isFile(String nameOfFile) {
+        if (nameOfFile.startsWith("zzz@"))
           return true;
         else
           return false;
+      }
+
+      List<Widget> widgetOfFile(fileName) {
+        List<Widget> fileWidget = [];
+        if (fileName.startsWith("zzz@PDF_")) {
+          String renamedFileName = fileName.replaceAll("zzz@PDF_", "");
+          fileWidget.add(Text(renamedFileName + ".pdf"));
+          fileWidget.add(Icon(
+            Icons.picture_as_pdf,
+            color: Colors.red,
+            size: 30.0,
+          ));
+
+          return fileWidget;
+        } else if (fileName.startsWith("zzz@xls_")) {
+          String renamedFileName = fileName.replaceAll("zzz@xls_", "");
+          fileWidget.add(Text(renamedFileName + ".xls"));
+          fileWidget.add(Icon(
+            Icons.description,
+            color: Colors.green,
+            size: 30.0,
+          ));
+
+          return fileWidget;
+        } else if (fileName.startsWith("zzz@xlsx_")) {
+          String renamedFileName = fileName.replaceAll("zzz@xlsx_", "");
+          fileWidget.add(Text(renamedFileName + ".xlsx"));
+          fileWidget.add(Icon(
+            Icons.description,
+            color: Colors.green,
+            size: 30.0,
+          ));
+
+          return fileWidget;
+        } else {
+          String renamedFileName = fileName.replaceAll("zzz@z_", "");
+          String fileExtension =
+              renamedFileName.substring(0, renamedFileName.lastIndexOf('^^'));
+          renamedFileName =
+              renamedFileName.substring(renamedFileName.indexOf('^^') + 2);
+          fileWidget.add(Text(renamedFileName + "." + fileExtension));
+          fileWidget.add(Icon(
+            Icons.insert_drive_file,
+            color: Colors.blueGrey,
+            size: 30.0,
+          ));
+
+          return fileWidget;
+        }
       }
 
 //  && timeMillis != null
@@ -215,7 +271,7 @@ class _InsideDirState extends State<InsideDir> {
       if (dirs != null) {
         if (dirs.documents.length != 0) {
           return Container(
-            padding: EdgeInsets.all(8),
+            padding: EdgeInsets.all(5),
             // ! Previous Code of Grid View
             // GridView.count(
             //   crossAxisCount: 2,
@@ -224,90 +280,90 @@ class _InsideDirState extends State<InsideDir> {
               children: List.generate(
                 dirs.documents.length,
                 (index) {
-                  if (isPDF(dirs.documents[index].documentID)) {
-                    String pdfFileName = dirs.documents[index].documentID
-                        .replaceAll("zzz@PDF_", "");
-                    pdfFileName = pdfFileName + ".pdf";
+                  String currentDocumentId = dirs.documents[index].documentID;
+                  if (isFile(currentDocumentId)) {
+                    List<Widget> fileWidgets = widgetOfFile(currentDocumentId);
+                    String fileName = fileWidgets[0].toString();
+                    fileName = fileWidgets[0].toString().substring(
+                        6,
+                        fileName.length -
+                            2); // * is not working then get name here
+
                     String firebaseDatabaseLocation =
                         widget.currentLocation.replaceAll("/collection", "");
                     StorageReference storageReference = FirebaseStorage.instance
                         .ref()
-                        .child(firebaseDatabaseLocation + "/" + pdfFileName);
+                        .child(firebaseDatabaseLocation + "/" + fileName);
                     Timestamp updatedTimeMillis =
                         dirs.documents[index].data["created_timestamp"];
-                    // (timeMillis[dirs.documents[index].documentID]);
                     var resultOfFileCreatedTime =
                         getConvertedTime(updatedTimeMillis);
 
                     return Container(
-                        padding: EdgeInsets.all(7),
+                        // padding: EdgeInsets.all(7),
                         child: InkWell(
-                          // child: Row(
-                          //   children: <Widget>[
-                          //     Padding(
-                          //       padding: const EdgeInsets.only(left: 13.0),
-                          //       child: Icon(
-                          //         Icons.picture_as_pdf,
-                          //         color: Colors.red,
-                          //         size: 30.0,
-                          //       ),
-                          //     ),
-                          //     Flexible(
-                          //       child: Container(
-                          //         child: Padding(
-                          //           padding: const EdgeInsets.only(left: 8.0),
-                          //           child: Text(
-                          //             pdfFileName,
-                          //             overflow: TextOverflow.ellipsis,
-                          //             style: TextStyle(fontSize: 19),
-                          //           ),
-                          //         ),
-                          //       ),
-                          //     ),
-                          //   ],
-                          // ),
+                      // ! Previous Code of Grid View
+                      // child: Row(
+                      //   children: <Widget>[
+                      //     Padding(
+                      //       padding: const EdgeInsets.only(left: 13.0),
+                      //       child: Icon(
+                      //         Icons.picture_as_pdf,
+                      //         color: Colors.red,
+                      //         size: 30.0,
+                      //       ),
+                      //     ),
+                      //     Flexible(
+                      //       child: Container(
+                      //         child: Padding(
+                      //           padding: const EdgeInsets.only(left: 8.0),
+                      //           child: Text(
+                      //             pdfFileName,
+                      //             overflow: TextOverflow.ellipsis,
+                      //             style: TextStyle(fontSize: 19),
+                      //           ),
+                      //         ),
+                      //       ),
+                      //     ),
+                      //   ],
+                      // ),
 
-                          child: ListTile(
-                            leading: Icon(
-                              Icons.picture_as_pdf,
-                              color: Colors.red,
-                              size: 30.0,
-                            ),
-                            title: Text(
-                              pdfFileName,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 17),
-                            ),
-                            subtitle: Text(resultOfFileCreatedTime.toString()),
+                      // * File View
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6.0),
+                        ),
+                        color: Color(0xfff0f3f4),
+                        child: ListTile(
+                          leading: fileWidgets[1],
+                          title: Text(
+                            fileName,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 17),
                           ),
-                          onTap: () async {
-                            downloadFile1(storageReference);
-                          },
-                          onLongPress: () async {
-                            // TODO : Delete file in ExternalStorage Also
-                            String firebaseDatabaseLocation = widget
-                                .currentLocation
-                                .replaceAll("/collection", "");
-                            StorageReference storageReference = FirebaseStorage
-                                .instance
-                                .ref()
-                                .child(firebaseDatabaseLocation +
-                                    "/" +
-                                    pdfFileName);
-                            storageReference.delete();
-                            print("Deleting");
-                            crudObj
-                                .deleteFolder(widget.currentLocation,
-                                    '${dirs.documents[index].documentID}')
-                                .then((results) {
-                              print("Folder File");
-                              initState();
-                            });
-                          },
-                        ));
+                          subtitle: Text(resultOfFileCreatedTime.toString()),
+                        ),
+                      ),
+                      onTap: () async {
+                        downloadFile1(storageReference);
+                      },
+                      onLongPress: () async {
+                        // TODO : Delete file in ExternalStorage Also
+
+                        storageReference.delete();
+                        print("Deleting");
+                        crudObj
+                            .deleteFolder(widget.currentLocation,
+                                '${dirs.documents[index].documentID}')
+                            .then((results) {
+                          print("Folder File");
+                          initState();
+                        });
+                      },
+                    ));
                   } else {
                     return Container(
-                      padding: EdgeInsets.all(7),
+                      // padding: EdgeInsets.all(7),
                       child: InkWell(
                         // ! Previous Code of Grid View
                         // child: Row(
@@ -334,18 +390,28 @@ class _InsideDirState extends State<InsideDir> {
                         //     ),
                         //   ],
                         // ),
-                        child: ListTile(
-                          leading: Icon(
-                            Icons.folder,
-                            color: Colors.blueGrey,
-                            size: 30.0,
+
+                        // * Directory View
+                        child: Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.0),
                           ),
-                          title: Text(
-                            dirs.documents[index].documentID,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 19),
+                          color: Color(0xfff0f3f4),
+                          child: ListTile(
+                            leading: Icon(
+                              Icons.folder,
+                              color: Colors.blueGrey,
+                              size: 30.0,
+                            ),
+                            title: Text(
+                              dirs.documents[index].documentID,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 19,
+                              ),
+                            ),
+                            trailing: Icon(Icons.keyboard_arrow_right),
                           ),
-                          trailing: Icon(Icons.keyboard_arrow_right),
                         ),
                         onTap: () {
                           Navigator.push(
@@ -361,6 +427,7 @@ class _InsideDirState extends State<InsideDir> {
                           );
                         },
                         onLongPress: () {
+                          // TODO: Delete This Folder in F Storage and try to delete All sub Directory from database
                           print("Deleting");
                           crudObj
                               .deleteFolder(widget.currentLocation,
@@ -378,7 +445,11 @@ class _InsideDirState extends State<InsideDir> {
             ),
           );
         } else {
-          return Center(child: Text("No Item Found"));
+          return Center(
+              child: Text(
+            "Folder is empty",
+            style: TextStyle(fontSize: 16),
+          ));
         }
       } else {
         return Center(child: CircularProgressIndicator());
@@ -404,6 +475,7 @@ class _InsideDirState extends State<InsideDir> {
       // ),
 
       body: bodyBuilder(context),
+      backgroundColor: Colors.blueGrey[100],
 
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
@@ -415,6 +487,7 @@ class _InsideDirState extends State<InsideDir> {
     );
   }
 
+  // TODO: Upload Any Files With prorper File Name in database and F Storage
   openFileExplorer() async {
     upload(fileName, filePath, firebaseDatabaseLocation) async {
       firebaseDatabaseLocation =
@@ -423,27 +496,42 @@ class _InsideDirState extends State<InsideDir> {
           .ref()
           .child(firebaseDatabaseLocation + "/" + fileName);
 
-      _onPDFAdd(String fullPDFname) {
-        fullPDFname = fullPDFname.replaceAll(".pdf", "");
-        fullPDFname = "zzz@PDF_" + fullPDFname;
-        crudObj.addFolder(widget.currentLocation, fullPDFname, true).then((_) {
+      _onPDFAdd(String documentFileName) {
+        crudObj
+            .addFolder(widget.currentLocation, documentFileName, true)
+            .then((_) {
           // initState();
         });
       }
 
       uploadPDF() {
+        String fileExtension =
+            fileName.contains(".") ? fileName.split('.')[1] : "pdf";
+
         final StorageUploadTask uploadTask = storageReference.putFile(
             File(filePath),
-            StorageMetadata(
-                contentType:
-                    'application/pdf')); // TODO: Wait for this and Show Progress of Upload then move too next step
-        uploadTask.onComplete.then((_) {
-          // todo: add Current timestamp to
-          _onPDFAdd(fileName);
+            StorageMetadata(contentType: 'application/$fileExtension'));
 
+        // fileName.substring(0, fileName.lastIndexOf('.'));
+        // fileName = fileName.substring(fileName.indexOf('^^') + 2);
+        uploadTask.onComplete.then((_) {
+          String fileNameWithoutExtension = fileName.contains(".")
+              ? fileName.substring(0, fileName.lastIndexOf('.'))
+              : fileName;
+          String documentFileName = "";
+          if (fileExtension == "pdf") {
+            documentFileName = "zzz@PDF_" + fileNameWithoutExtension;
+          } else if (fileExtension == "xls") {
+            documentFileName = "zzz@xls_" + fileNameWithoutExtension;
+          } else if (fileExtension == "xlsx") {
+            documentFileName = "zzz@xlsx_" + fileNameWithoutExtension;
+          } else {
+            documentFileName =
+                "zzz@z_" + fileExtension + "^^" + fileNameWithoutExtension;
+          }
+          _onPDFAdd(documentFileName);
           pr.hide();
-          initState(); // ! FIX this :: wait for getting value of timestamp
-          // });
+          initState();
         });
       }
 
@@ -459,12 +547,10 @@ class _InsideDirState extends State<InsideDir> {
     }
 
     try {
-      _paths = await FilePicker.getMultiFilePath(
-          type: FileType.custom, fileExtension: "pdf");
+      _paths = await FilePicker.getMultiFilePath(type: FileType.any);
       if (_paths != null) {
         uploadToFirebase();
       }
-      // initState();
     } on PlatformException catch (e) {
       print("Unsupported Opeation " + e.toString());
     }

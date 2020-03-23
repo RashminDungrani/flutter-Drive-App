@@ -13,41 +13,78 @@ class _HomeScreenState extends State<HomeScreen> {
     "Vision Commands",
     "Dai Chi Commands",
   ];
+  List<String> _manualsList1 = [
+    "PLCs",
+    "Drives",
+    "Vision\nCommands",
+    "Dai Chi\nCommands",
+  ];
+
   @override
   Widget build(BuildContext context) {
+    var size = MediaQuery.of(context).size;
+
+    /*24 is for notification bar on Android*/
+    final double itemHeight = (size.height - kToolbarHeight - 24) / 2;
+    final double itemWidth = size.width / 2;
+
     return Scaffold(
-      body: Container(
-          child: GridView.count(
-        crossAxisCount: 2,
-        children: List.generate(_manualsList.length, (index) {
-          return Scaffold(
-            body: InkWell(
-                child: Center(
-                  child: Text(
-                    ('${_manualsList[index]}'),
-                    style: Theme.of(context).textTheme.headline,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => InsideDir(
-                        dirName: '${_manualsList[index]}',
-                        currentLocation:
-                            "Folders/${_manualsList[index]}/collection",
+        appBar: AppBar(
+          title: Text('Manuals'),
+          actions: <Widget>[
+            // Padding(
+            //   padding: const EdgeInsets.only(right: 10.0),
+            //   child: Icon(Icons.search),
+            // )
+          ],
+        ),
+        backgroundColor: Colors.blueGrey[100],
+        body: Container(
+          child: Padding(
+            padding: const EdgeInsets.all(2.0),
+            child: GridView.count(
+              crossAxisCount: 2,
+              childAspectRatio: (itemWidth / itemHeight),
+              controller: new ScrollController(keepScrollOffset: false),
+              shrinkWrap: true,
+              children: List.generate(_manualsList.length, (index) {
+                return InkWell(
+                    child: Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15.0),
                       ),
-                      // Pass the arguments as part of the RouteSettings. The
-                      // DetailScreen reads the arguments from these settings.
-                      // settings: RouteSettings(
-                      //   arguments: index,
-                      // ),
+                      color: Colors.blueGrey[600],
+                      child: Center(
+                        child: Text(
+                          ('${_manualsList1[index]}'),
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 25.0,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.8),
+                        ),
+                      ),
                     ),
-                  );
-                }),
-          );
-        }),
-      )),
-    );
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => InsideDir(
+                            dirName: '${_manualsList[index]}',
+                            currentLocation:
+                                "Folders/${_manualsList[index]}/collection",
+                          ),
+                          // Pass the arguments as part of the RouteSettings. The
+                          // DetailScreen reads the arguments from these settings.
+                          // settings: RouteSettings(
+                          //   arguments: index,
+                          // ),
+                        ),
+                      );
+                    });
+              }),
+            ),
+          ),
+        ));
   }
 }
