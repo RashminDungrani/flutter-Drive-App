@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
 // );
 
         MaterialApp(
-      title: 'mahindra_app',
+      title: 'Manuals',
       theme: ThemeData(
           primarySwatch: Colors.blueGrey,
           pageTransitionsTheme: PageTransitionsTheme(builders: {

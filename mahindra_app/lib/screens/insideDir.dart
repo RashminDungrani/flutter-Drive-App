@@ -217,36 +217,27 @@ class _InsideDirState extends State<InsideDir> {
           return false;
       }
 
-      List<Widget> widgetOfFile(fileName) {
-        List<Widget> fileWidget = [];
+      List<String> widgetOfFile(fileName) {
+        List<String> fileWidget = [];
         if (fileName.startsWith("zzz@PDF_")) {
           String renamedFileName = fileName.replaceAll("zzz@PDF_", "");
-          fileWidget.add(Text(renamedFileName + ".pdf"));
-          fileWidget.add(Icon(
-            Icons.picture_as_pdf,
-            color: Colors.red,
-            size: 30.0,
-          ));
+          fileWidget.add(renamedFileName + ".pdf");
+          fileWidget.add("0xe415"); // picture_as_pdf
+          fileWidget.add("0xffff0000"); // red color
 
           return fileWidget;
         } else if (fileName.startsWith("zzz@xls_")) {
           String renamedFileName = fileName.replaceAll("zzz@xls_", "");
-          fileWidget.add(Text(renamedFileName + ".xls"));
-          fileWidget.add(Icon(
-            Icons.description,
-            color: Colors.green,
-            size: 30.0,
-          ));
+          fileWidget.add(renamedFileName + ".xls");
+          fileWidget.add("0xe873");
+          fileWidget.add("0xff4caf50");
 
           return fileWidget;
         } else if (fileName.startsWith("zzz@xlsx_")) {
           String renamedFileName = fileName.replaceAll("zzz@xlsx_", "");
-          fileWidget.add(Text(renamedFileName + ".xlsx"));
-          fileWidget.add(Icon(
-            Icons.description,
-            color: Colors.green,
-            size: 30.0,
-          ));
+          fileWidget.add(renamedFileName + ".xlsx");
+          fileWidget.add("0xe873");
+          fileWidget.add("0xff4caf50");
 
           return fileWidget;
         } else {
@@ -255,12 +246,9 @@ class _InsideDirState extends State<InsideDir> {
               renamedFileName.substring(0, renamedFileName.lastIndexOf('^^'));
           renamedFileName =
               renamedFileName.substring(renamedFileName.indexOf('^^') + 2);
-          fileWidget.add(Text(renamedFileName + "." + fileExtension));
-          fileWidget.add(Icon(
-            Icons.insert_drive_file,
-            color: Colors.blueGrey,
-            size: 30.0,
-          ));
+          fileWidget.add(renamedFileName + "." + fileExtension);
+          fileWidget.add("0xe24d"); //insert_drive_file
+          fileWidget.add("0xff607d8b");
 
           return fileWidget;
         }
@@ -282,13 +270,11 @@ class _InsideDirState extends State<InsideDir> {
                 (index) {
                   String currentDocumentId = dirs.documents[index].documentID;
                   if (isFile(currentDocumentId)) {
-                    List<Widget> fileWidgets = widgetOfFile(currentDocumentId);
+                    List<String> fileWidgets = widgetOfFile(currentDocumentId);
                     String fileName = fileWidgets[0].toString();
-                    fileName = fileWidgets[0].toString().substring(
-                        6,
-                        fileName.length -
-                            2); // * is not working then get name here
-
+                    fileName = fileWidgets[0];
+                    int iconOfFile = int.parse(fileWidgets[1]);
+                    int iconColor = int.parse(fileWidgets[2]);
                     String firebaseDatabaseLocation =
                         widget.currentLocation.replaceAll("/collection", "");
                     StorageReference storageReference = FirebaseStorage.instance
@@ -335,7 +321,11 @@ class _InsideDirState extends State<InsideDir> {
                         ),
                         color: Color(0xfff0f3f4),
                         child: ListTile(
-                          leading: fileWidgets[1],
+                          leading: Icon(
+                            IconData(iconOfFile, fontFamily: 'MaterialIcons'),
+                            size: 30.0,
+                            color: Color(iconColor),
+                          ),
                           title: Text(
                             fileName,
                             overflow: TextOverflow.ellipsis,
@@ -353,8 +343,8 @@ class _InsideDirState extends State<InsideDir> {
                         storageReference.delete();
                         print("Deleting");
                         crudObj
-                            .deleteFolder(widget.currentLocation,
-                                '${dirs.documents[index].documentID}')
+                            .deleteFolder(
+                                widget.currentLocation, currentDocumentId)
                             .then((results) {
                           print("Folder File");
                           initState();
