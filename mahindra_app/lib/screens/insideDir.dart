@@ -3,7 +3,7 @@
 //TODO: Add Search Option of Files and Folders
 //TODO: onLongPress Show Alert Box "Are you Sure" and then delete file or Folder if input is yes (true)
 //TODO: Pull Down To refresh
-//TODO: Add Multiple selection to long press for Delete operation
+//TODO: Delete Files and Folder using Swipe Right to left and Tap on Delete Button(red color) To Delete that file or folder
 
 import 'dart:io';
 
@@ -19,6 +19,37 @@ import 'package:open_file/open_file.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:progress_dialog/progress_dialog.dart';
+
+Future<void> downloadFile1(StorageReference ref) async {
+  ProgressDialog pr;
+
+  // final String url = await ref.getDownloadURL();
+  // final http.Response downloadData = await http.get(url);
+  final String fileName = await ref.getName();
+  // final String path = await ref.getPath();
+  // final Directory systemTempDir = Directory.systemTemp;
+  var documentDirectory = await getExternalStorageDirectory();
+  print("Directory :: " + documentDirectory.toString());
+  File createNewFile = new File(join(documentDirectory.path, fileName));
+  // print("😡  " + createNewFile.toString());
+  String locationOfNewFile =
+      createNewFile.toString().replaceAll("File: '", "").replaceAll("'", "");
+
+  // createNewFile.existsSync()
+  if (await File(locationOfNewFile).exists()) {
+    print("From Already Exist File");
+    await OpenFile.open(locationOfNewFile);
+  } else {
+    pr.show();
+    print("From Create new File");
+    await createNewFile.create().then((_) async {
+      await ref.writeToFile(createNewFile).future.then((_) async {
+        pr.hide();
+        await OpenFile.open(locationOfNewFile);
+      });
+    });
+  }
+}
 
 class InsideDir extends StatefulWidget {
   final String dirName;
@@ -38,6 +69,32 @@ class _InsideDirState extends State<InsideDir> {
   CrudMedthods crudObj = new CrudMedthods();
   Map<String, String> _paths;
 
+  // Icon actionIcon = Icon(
+  //   Icons.search,
+  //   color: Colors.white,
+  // );
+  // final key = new GlobalKey<ScaffoldState>();
+  // final TextEditingController _searchQuery = new TextEditingController();
+  // List<String> _list;
+  // bool _isSearching;
+  // String _searchText = "";
+
+  // _InsideDirState() {
+  //   _searchQuery.addListener(() {
+  //     if (_searchQuery.text.isEmpty) {
+  //       setState(() {
+  //         _isSearching = false;
+  //         _searchText = "";
+  //       });
+  //     } else {
+  //       setState(() {
+  //         _isSearching = true;
+  //         _searchText = _searchQuery.text;
+  //       });
+  //     }
+  //   });
+  // }
+
   // String _extension;
   // FileType _pickType = FileType.custom;
   // GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
@@ -53,35 +110,6 @@ class _InsideDirState extends State<InsideDir> {
     });
 
     super.initState();
-  }
-
-  Future<void> downloadFile1(StorageReference ref) async {
-    // final String url = await ref.getDownloadURL();
-    // final http.Response downloadData = await http.get(url);
-    final String fileName = await ref.getName();
-    // final String path = await ref.getPath();
-    // final Directory systemTempDir = Directory.systemTemp;
-    var documentDirectory = await getExternalStorageDirectory();
-    print("Directory :: " + documentDirectory.toString());
-    File createNewFile = new File(join(documentDirectory.path, fileName));
-    // print("😡  " + createNewFile.toString());
-    String locationOfNewFile =
-        createNewFile.toString().replaceAll("File: '", "").replaceAll("'", "");
-
-    // createNewFile.existsSync()
-    if (await File(locationOfNewFile).exists()) {
-      print("From Already Exist File");
-      await OpenFile.open(locationOfNewFile);
-    } else {
-      pr.show();
-      print("From Create new File");
-      await createNewFile.create().then((_) async {
-        await ref.writeToFile(createNewFile).future.then((_) async {
-          pr.hide();
-          await OpenFile.open(locationOfNewFile);
-        });
-      });
-    }
   }
 
   Widget build(BuildContext context) {
@@ -109,7 +137,7 @@ class _InsideDirState extends State<InsideDir> {
               ),
               actions: <Widget>[
                 new FlatButton(
-                  child: new Text('CANCEL'),
+                  child: new Text('Cancel'),
                   onPressed: () {
                     Navigator.of(context).pop();
                     _textFieldController.clear();
@@ -130,38 +158,6 @@ class _InsideDirState extends State<InsideDir> {
             );
           });
     }
-
-    AppBar _defaultBar = AppBar(
-      title: Text(widget.dirName),
-      actions: <Widget>[
-        IconButton(
-            icon: Icon(
-              Icons.create_new_folder,
-              color: Colors.white,
-            ),
-            onPressed: () {
-              displayDialog(context);
-            }),
-      ],
-    );
-
-    // AppBar _selectBar = AppBar(
-    //   title: Text(widget.dirName),
-    //   leading: Icon(Icons.close),
-    //   actions: <Widget>[
-    //     Icon(Icons.flag),
-    //     Icon(Icons.delete),
-    //     Icon(Icons.more_vert)
-    //   ],
-    //   backgroundColor: Colors.deepPurple,
-    // );
-    AppBar _appBar = _defaultBar;
-
-    // _changeAppbar() {
-    //   setState(() {
-    //     _appBar = _appBar == _defaultBar ? _selectBar : _defaultBar;
-    //   });
-    // }
 
     String getConvertedTime(Timestamp timestamp) {
       var now = DateTime.now();
@@ -194,7 +190,7 @@ class _InsideDirState extends State<InsideDir> {
         }
       } else {
         if (diff.inDays == 7) {
-          time = (diff.inDays / 7).floor().toString() + ' WEEK AGO';
+          time = (diff.inDays / 7).floor().toString() + ' Week ago';
         } else {
           time = format.format(date);
         }
@@ -203,13 +199,6 @@ class _InsideDirState extends State<InsideDir> {
     }
 
     Widget bodyBuilder(BuildContext context) {
-      // bool isPDF(String nameOfFile) {
-      //   if (nameOfFile.startsWith("zzz@PDF_"))
-      //     return true;
-      //   else
-      //     return false;
-      // }
-
       bool isFile(String nameOfFile) {
         if (nameOfFile.startsWith("zzz@"))
           return true;
@@ -254,16 +243,10 @@ class _InsideDirState extends State<InsideDir> {
         }
       }
 
-//  && timeMillis != null
-// || timeMillis.isNotEmpty
       if (dirs != null) {
         if (dirs.documents.length != 0) {
           return Container(
             padding: EdgeInsets.all(5),
-            // ! Previous Code of Grid View
-            // GridView.count(
-            //   crossAxisCount: 2,
-            //   childAspectRatio: 3,
             child: ListView(
               children: List.generate(
                 dirs.documents.length,
@@ -444,28 +427,34 @@ class _InsideDirState extends State<InsideDir> {
       } else {
         return Center(child: CircularProgressIndicator());
       }
-
-      // printAllFilesFromFirebase();
     }
 
     return Scaffold(
-      appBar: _appBar,
-      // AppBar(
-      //   title: Text(_title),
-      //   actions: <Widget>[
-      //     IconButton(
-      //         icon: Icon(
-      //           Icons.add,
-      //           color: Colors.white,
-      //         ),
-      //         onPressed: () {
-      //           _displayDialog(context);
-      //         }),
-      //   ],
-      // ),
+      appBar: AppBar(
+        title: Text(widget.dirName),
+        actions: [
+          IconButton(
+              icon: Icon(
+                Icons.create_new_folder,
+                color: Colors.white,
+              ),
+              onPressed: () {
+                displayDialog(context);
+              }),
+          IconButton(
+              icon: Icon(Icons.search),
+              onPressed: () {
+                showSearch(
+                  context: context,
+                  delegate: FilesSearch(dirs, widget.currentLocation),
+                );
+              })
+        ],
+      ),
+      // key: key,
 
-      body: bodyBuilder(context),
       backgroundColor: Colors.blueGrey[100],
+      body: bodyBuilder(context),
 
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
@@ -577,4 +566,312 @@ class _InsideDirState extends State<InsideDir> {
   //     print('Data : ${snapshot.value}');
   //   });
   // }
+}
+
+class FilesSearch extends SearchDelegate {
+  final QuerySnapshot dirs;
+  final String currentLocation;
+
+  FilesSearch(this.dirs, this.currentLocation);
+
+  @override
+  ThemeData appBarTheme(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return theme.copyWith(
+      primaryColor: Colors.blueGrey,
+      textTheme: TextTheme(title: TextStyle(color: Colors.white, fontSize: 19)),
+      // cursorColor: Colors.white,
+    );
+  }
+
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: Icon(Icons.clear),
+        onPressed: () {
+          query = '';
+        },
+      ),
+    ];
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      icon: Icon(Icons.arrow_back),
+      onPressed: () {
+        close(context, null);
+      },
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    return Container();
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    List<DocumentSnapshot> results = dirs.documents
+        .where((a) => a.documentID.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+    return globalBodyBuilder(context, results, currentLocation);
+    // return ListView(
+    // children: results.map<Widget>((a) => Text(a.documentID)).toList());
+  }
+}
+
+String getConvertedTime(Timestamp timestamp) {
+  var now = DateTime.now();
+  var today = DateTime(now.year, now.month, now.day);
+  var yesterday = DateTime(now.year, now.month, now.day - 1);
+  var format = DateFormat.yMMMMd('en_US');
+  var date =
+      DateTime.fromMillisecondsSinceEpoch(timestamp.millisecondsSinceEpoch);
+  var diff = now.difference(date);
+  var time = '';
+
+  final aDate = DateTime(date.year, date.month, date.day);
+
+  if (diff.inSeconds <= 0 ||
+      diff.inSeconds > 0 && diff.inMinutes == 0 ||
+      diff.inMinutes > 0 && diff.inHours == 0 ||
+      diff.inHours > 0 && diff.inDays == 0) {
+    if (aDate == today) {
+      time = "Today " + DateFormat('HH:mm').format(date);
+    } else if (aDate == yesterday) {
+      time = "Yesterday " + DateFormat('HH:mm').format(date);
+    }
+    // time = DateFormat('HH:mm a').format(date);
+
+  } else if (diff.inDays > 0 && diff.inDays < 7) {
+    if (diff.inDays == 1) {
+      time = diff.inDays.toString() + ' Day ago';
+    } else {
+      time = diff.inDays.toString() + ' Days ago';
+    }
+  } else {
+    if (diff.inDays == 7) {
+      time = (diff.inDays / 7).floor().toString() + ' Week ago';
+    } else {
+      time = format.format(date);
+    }
+  }
+  return time;
+}
+
+Widget globalBodyBuilder(
+    BuildContext context, List<DocumentSnapshot> dirs, String currentLocation) {
+  CrudMedthods crudObj = new CrudMedthods();
+
+  bool isFile(String nameOfFile) {
+    if (nameOfFile.startsWith("zzz@"))
+      return true;
+    else
+      return false;
+  }
+
+  List<String> widgetOfFile(fileName) {
+    List<String> fileWidget = [];
+    if (fileName.startsWith("zzz@PDF_")) {
+      String renamedFileName = fileName.replaceAll("zzz@PDF_", "");
+      fileWidget.add(renamedFileName + ".pdf");
+      fileWidget.add("0xe415"); // picture_as_pdf
+      fileWidget.add("0xffff0000"); // red color
+
+      return fileWidget;
+    } else if (fileName.startsWith("zzz@xls_")) {
+      String renamedFileName = fileName.replaceAll("zzz@xls_", "");
+      fileWidget.add(renamedFileName + ".xls");
+      fileWidget.add("0xe873");
+      fileWidget.add("0xff4caf50");
+
+      return fileWidget;
+    } else if (fileName.startsWith("zzz@xlsx_")) {
+      String renamedFileName = fileName.replaceAll("zzz@xlsx_", "");
+      fileWidget.add(renamedFileName + ".xlsx");
+      fileWidget.add("0xe873");
+      fileWidget.add("0xff4caf50");
+
+      return fileWidget;
+    } else {
+      String renamedFileName = fileName.replaceAll("zzz@z_", "");
+      String fileExtension =
+          renamedFileName.substring(0, renamedFileName.lastIndexOf('^^'));
+      renamedFileName =
+          renamedFileName.substring(renamedFileName.indexOf('^^') + 2);
+      fileWidget.add(renamedFileName + "." + fileExtension);
+      fileWidget.add("0xe24d"); //insert_drive_file
+      fileWidget.add("0xff607d8b");
+
+      return fileWidget;
+    }
+  }
+
+  if (dirs != null) {
+    if (dirs.length != 0) {
+      return Scaffold(
+        backgroundColor: Colors.blueGrey[100],
+        body: Container(
+          padding: EdgeInsets.all(5),
+          child: ListView(
+            children: List.generate(
+              dirs.length,
+              (index) {
+                String currentDocumentId = dirs[index].documentID;
+                if (isFile(currentDocumentId)) {
+                  List<String> fileWidgets = widgetOfFile(currentDocumentId);
+                  String fileName = fileWidgets[0].toString();
+                  fileName = fileWidgets[0];
+                  int iconOfFile = int.parse(fileWidgets[1]);
+                  int iconColor = int.parse(fileWidgets[2]);
+                  String firebaseDatabaseLocation =
+                      currentLocation.replaceAll("/collection", "");
+                  StorageReference storageReference = FirebaseStorage.instance
+                      .ref()
+                      .child(firebaseDatabaseLocation + "/" + fileName);
+                  Timestamp updatedTimeMillis =
+                      dirs[index].data["created_timestamp"];
+                  var resultOfFileCreatedTime =
+                      getConvertedTime(updatedTimeMillis);
+
+                  return Container(
+                      // padding: EdgeInsets.all(7),
+                      child: InkWell(
+                    // ! Previous Code of Grid View
+                    // child: Row(
+                    //   children: <Widget>[
+                    //     Padding(
+                    //       padding: const EdgeInsets.only(left: 13.0),
+                    //       child: Icon(
+                    //         Icons.picture_as_pdf,
+                    //         color: Colors.red,
+                    //         size: 30.0,
+                    //       ),
+                    //     ),
+                    //     Flexible(
+                    //       child: Container(
+                    //         child: Padding(
+                    //           padding: const EdgeInsets.only(left: 8.0),
+                    //           child: Text(
+                    //             pdfFileName,
+                    //             overflow: TextOverflow.ellipsis,
+                    //             style: TextStyle(fontSize: 19),
+                    //           ),
+                    //         ),
+                    //       ),
+                    //     ),
+                    //   ],
+                    // ),
+
+                    // * File View
+                    child: Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6.0),
+                      ),
+                      color: Color(0xfff0f3f4),
+                      child: ListTile(
+                        leading: Icon(
+                          IconData(iconOfFile, fontFamily: 'MaterialIcons'),
+                          size: 30.0,
+                          color: Color(iconColor),
+                        ),
+                        title: Text(
+                          fileName,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 17),
+                        ),
+                        subtitle: Text(resultOfFileCreatedTime.toString()),
+                      ),
+                    ),
+                    onTap: () async {
+                      downloadFile1(storageReference);
+                    },
+                    // onLongPress: () async {
+                    //   // TODO : Delete file in ExternalStorage Also
+
+                    //   storageReference.delete();
+                    //   print("Deleting");
+                    //   crudObj
+                    //       .deleteFolder(currentLocation, currentDocumentId)
+                    //       .then((results) {
+                    //     print("Folder File");
+                    //     // initState();
+                    //     //TODO: Out From Search
+                    //   });
+                    // },
+                  ));
+                } else {
+                  return Container(
+                    // padding: EdgeInsets.all(7),
+                    child: InkWell(
+                      // * Directory View
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                        color: Color(0xfff0f3f4),
+                        child: ListTile(
+                          leading: Icon(
+                            Icons.folder,
+                            color: Colors.blueGrey,
+                            size: 30.0,
+                          ),
+                          title: Text(
+                            dirs[index].documentID,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 19,
+                            ),
+                          ),
+                          trailing: Icon(Icons.keyboard_arrow_right),
+                        ),
+                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => InsideDir(
+                              dirName: '${dirs[index].documentID}',
+                              currentLocation: currentLocation +
+                                  '/${dirs[index].documentID}' +
+                                  '/collection',
+                            ),
+                          ),
+                        );
+                      },
+                      // onLongPress: () {
+                      //   // TODO: Delete This Folder in F Storage and try to delete All sub Directory from database
+                      //   print("Deleting");
+                      //   crudObj
+                      //       .deleteFolder(
+                      //           currentLocation, '${dirs[index].documentID}')
+                      //       .then((results) {
+                      //     print("Folder Deleted");
+                      //     // initState();
+                      //     //TODO: Out From Search
+                      //   });
+                      // },
+                    ),
+                  );
+                }
+              },
+            ),
+          ),
+        ),
+      );
+    } else {
+      return Scaffold(
+        backgroundColor: Colors.blueGrey[100],
+        body: Center(
+            child: Text(
+          "Folder is empty",
+          style: TextStyle(fontSize: 16),
+        )),
+      );
+    }
+  } else {
+    return Center(child: CircularProgressIndicator());
+  }
 }
