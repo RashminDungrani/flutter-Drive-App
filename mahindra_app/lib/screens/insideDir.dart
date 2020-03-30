@@ -20,10 +20,10 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:progress_dialog/progress_dialog.dart';
 
-Future<void> downloadFile1(StorageReference ref, context) async {
+Future<bool> downloadFile1(StorageReference ref, context) async {
   ProgressDialog pr;
   pr = new ProgressDialog(context);
-  pr.style(message: 'Please wait...');
+  pr.style(message: 'Downloading...');
 
   // final String url = await ref.getDownloadURL();
   // final http.Response downloadData = await http.get(url);
@@ -33,23 +33,31 @@ Future<void> downloadFile1(StorageReference ref, context) async {
   var documentDirectory = await getExternalStorageDirectory();
   print("Directory :: " + documentDirectory.toString());
   File createNewFile = new File(join(documentDirectory.path, fileName));
-  // print("😡  " + createNewFile.toString());
   String locationOfNewFile =
       createNewFile.toString().replaceAll("File: '", "").replaceAll("'", "");
 
   // createNewFile.existsSync()
   if (await File(locationOfNewFile).exists()) {
-    print("From Already Exist File");
     await OpenFile.open(locationOfNewFile);
+    return false;
   } else {
-    pr.show();
-    print("From Create new File");
-    await createNewFile.create().then((_) async {
-      await ref.writeToFile(createNewFile).future.then((_) async {
-        pr.hide();
-        await OpenFile.open(locationOfNewFile);
-      });
-    });
+    try {
+      final result = await InternetAddress.lookup('google.com');
+      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        print('connected');
+        pr.show();
+        await createNewFile.create().then((_) async {
+          await ref.writeToFile(createNewFile).future.then((_) async {
+            pr.hide();
+            await OpenFile.open(locationOfNewFile);
+          });
+        });
+      }
+      return false;
+    } on SocketException catch (_) {
+      print('not connected');
+      return true;
+    }
   }
 }
 
@@ -116,7 +124,25 @@ class _InsideDirState extends State<InsideDir> {
 
   Widget build(BuildContext context) {
     pr = new ProgressDialog(context);
-    pr.style(message: 'Please wait...');
+    pr.style(message: 'Uploading...');
+    final GlobalKey<ScaffoldState> _scaffoldKey =
+        new GlobalKey<ScaffoldState>();
+
+    void showInSnackBar(String value) {
+      _scaffoldKey.currentState.showSnackBar(
+        new SnackBar(
+            duration: Duration(milliseconds: 1500),
+            content: Text(
+              value,
+              style: TextStyle(fontSize: 16),
+            )),
+      );
+      //  new Text(
+      //     value,
+      //     style: TextStyle(fontSize: 16),
+      //   )));
+    }
+
     _onAdd() {
       crudObj
           .addFolder(widget.currentLocation, _textFieldController.text, false)
@@ -178,21 +204,21 @@ class _InsideDirState extends State<InsideDir> {
           diff.inMinutes > 0 && diff.inHours == 0 ||
           diff.inHours > 0 && diff.inDays == 0) {
         if (aDate == today) {
-          time = "Today " + DateFormat('HH:mm').format(date);
+          time = "today " + DateFormat('HH:mm').format(date);
         } else if (aDate == yesterday) {
-          time = "Yesterday " + DateFormat('HH:mm').format(date);
+          time = "yesterday " + DateFormat('HH:mm').format(date);
         }
         // time = DateFormat('HH:mm a').format(date);
 
       } else if (diff.inDays > 0 && diff.inDays < 7) {
         if (diff.inDays == 1) {
-          time = diff.inDays.toString() + ' Day ago';
+          time = diff.inDays.toString() + ' day ago';
         } else {
-          time = diff.inDays.toString() + ' Days ago';
+          time = diff.inDays.toString() + ' days ago';
         }
       } else {
         if (diff.inDays == 7) {
-          time = (diff.inDays / 7).floor().toString() + ' Week ago';
+          time = (diff.inDays / 7).floor().toString() + ' week ago';
         } else {
           time = format.format(date);
         }
@@ -269,7 +295,6 @@ class _InsideDirState extends State<InsideDir> {
                         dirs.documents[index].data["created_timestamp"];
                     var resultOfFileCreatedTime =
                         getConvertedTime(updatedTimeMillis);
-
                     return Container(
                         // padding: EdgeInsets.all(7),
                         child: InkWell(
@@ -317,10 +342,16 @@ class _InsideDirState extends State<InsideDir> {
                             style: TextStyle(fontSize: 17),
                           ),
                           subtitle: Text(resultOfFileCreatedTime.toString()),
+                          trailing: IconButton(
+                              icon: Icon(Icons.offline_pin), onPressed: null),
                         ),
                       ),
                       onTap: () async {
-                        downloadFile1(storageReference, context);
+                        bool isInternetOff =
+                            await downloadFile1(storageReference, context);
+                        if (isInternetOff) {
+                          showInSnackBar("You are Offline now");
+                        }
                       },
                       onLongPress: () async {
                         // TODO : Delete file in ExternalStorage Also
@@ -404,11 +435,12 @@ class _InsideDirState extends State<InsideDir> {
                         onLongPress: () {
                           // TODO: Delete This Folder in F Storage and try to delete All sub Directory from database
                           print("Deleting");
+                          showInSnackBar(
+                              "${dirs.documents[index].documentID} is Deleted");
                           crudObj
                               .deleteFolder(widget.currentLocation,
                                   '${dirs.documents[index].documentID}')
                               .then((results) {
-                            print("Folder Deleted");
                             initState();
                           });
                         },
@@ -453,11 +485,9 @@ class _InsideDirState extends State<InsideDir> {
               })
         ],
       ),
-      // key: key,
-
+      key: _scaffoldKey,
       backgroundColor: Colors.blueGrey[100],
       body: bodyBuilder(context),
-
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           openFileExplorer();
@@ -481,7 +511,7 @@ class _InsideDirState extends State<InsideDir> {
         crudObj
             .addFolder(widget.currentLocation, documentFileName, true)
             .then((_) {
-          // initState();
+          initState();
         });
       }
 
@@ -512,6 +542,7 @@ class _InsideDirState extends State<InsideDir> {
           }
           _onPDFAdd(documentFileName);
           pr.hide();
+
           initState();
         });
       }

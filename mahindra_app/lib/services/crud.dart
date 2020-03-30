@@ -93,4 +93,18 @@ class CrudMedthods {
   getData(String currentLocation) async {
     return await Firestore.instance.collection(currentLocation).getDocuments();
   }
+
+  bool isDownloaded(String refName) {
+    // String fileName = await refName.getName();
+    var documentDirectory = getExternalStorageDirectory();
+    File filePath = new File(join(documentDirectory.path, fileName));
+    String finalFilePath =
+        filePath.toString().replaceAll("File: '", "").replaceAll("'", "");
+    if (await File(finalFilePath).exists()) {
+      return true;
+    } else
+      return false;
+  }
+
+  getDownloadedFileNames() async {}
 }
