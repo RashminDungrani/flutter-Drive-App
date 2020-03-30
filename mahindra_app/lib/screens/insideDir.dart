@@ -1,3 +1,4 @@
+//TODO: Check internet if Folder is Empty and if Internet is Off then Show Snackbar
 //TODO: Delete Files and Folder in FStorage inside Folder When Folder is delete
 //TODO: Show Simple Notify text At bottom like other Apps
 //TODO: Add Search Option of Files and Folders
@@ -31,7 +32,7 @@ Future<bool> downloadFile1(StorageReference ref, context) async {
   // final String path = await ref.getPath();
   // final Directory systemTempDir = Directory.systemTemp;
   var documentDirectory = await getExternalStorageDirectory();
-  print("Directory :: " + documentDirectory.toString());
+  // print("Directory :: " + documentDirectory.toString());
   File createNewFile = new File(join(documentDirectory.path, fileName));
   String locationOfNewFile =
       createNewFile.toString().replaceAll("File: '", "").replaceAll("'", "");
@@ -44,7 +45,7 @@ Future<bool> downloadFile1(StorageReference ref, context) async {
     try {
       final result = await InternetAddress.lookup('google.com');
       if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
-        print('connected');
+        // print('connected');
         pr.show();
         await createNewFile.create().then((_) async {
           await ref.writeToFile(createNewFile).future.then((_) async {
@@ -55,7 +56,7 @@ Future<bool> downloadFile1(StorageReference ref, context) async {
       }
       return false;
     } on SocketException catch (_) {
-      print('not connected');
+      // print('not connected');
       return true;
     }
   }
@@ -78,6 +79,10 @@ class _InsideDirState extends State<InsideDir> {
   // Map<String, int> timeMillis;
   CrudMedthods crudObj = new CrudMedthods();
   Map<String, String> _paths;
+
+  String directory;
+  List downloadedFilePaths = new List();
+  List<String> downloadedFileNames = [];
 
   // Icon actionIcon = Icon(
   //   Icons.search,
@@ -119,7 +124,23 @@ class _InsideDirState extends State<InsideDir> {
       });
     });
 
+    _listofFiles();
+
     super.initState();
+  }
+
+  void _listofFiles() async {
+    directory = (await getExternalStorageDirectory()).path;
+    setState(() {
+      downloadedFilePaths = Directory("$directory/").listSync();
+    });
+
+    for (var filePath in downloadedFilePaths) {
+      String fileName = filePath.toString();
+      fileName = fileName?.split("/")?.last.toString().replaceAll("'", "");
+      downloadedFileNames.add(fileName);
+    }
+    // print(downloadedFileNames);
   }
 
   Widget build(BuildContext context) {
@@ -130,17 +151,19 @@ class _InsideDirState extends State<InsideDir> {
 
     void showInSnackBar(String value) {
       _scaffoldKey.currentState.showSnackBar(
-        new SnackBar(
-            duration: Duration(milliseconds: 1500),
-            content: Text(
-              value,
-              style: TextStyle(fontSize: 16),
-            )),
+        SnackBar(
+          duration: Duration(milliseconds: 1500),
+          content: Container(
+            height: 12,
+            child: Center(
+              child: Text(
+                value,
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ),
       );
-      //  new Text(
-      //     value,
-      //     style: TextStyle(fontSize: 16),
-      //   )));
     }
 
     _onAdd() {
@@ -271,6 +294,13 @@ class _InsideDirState extends State<InsideDir> {
         }
       }
 
+      int getDownloadedColor(fileName) {
+        if (downloadedFileNames.contains(fileName)) {
+          return 0xff858487;
+        } else
+          return 0xfff0f3f4;
+      }
+
       if (dirs != null) {
         if (dirs.documents.length != 0) {
           return Container(
@@ -295,6 +325,8 @@ class _InsideDirState extends State<InsideDir> {
                         dirs.documents[index].data["created_timestamp"];
                     var resultOfFileCreatedTime =
                         getConvertedTime(updatedTimeMillis);
+
+                    int downloadIconColor = getDownloadedColor(fileName);
                     return Container(
                         // padding: EdgeInsets.all(7),
                         child: InkWell(
@@ -331,26 +363,27 @@ class _InsideDirState extends State<InsideDir> {
                         ),
                         color: Color(0xfff0f3f4),
                         child: ListTile(
-                          leading: Icon(
-                            IconData(iconOfFile, fontFamily: 'MaterialIcons'),
-                            size: 30.0,
-                            color: Color(iconColor),
-                          ),
-                          title: Text(
-                            fileName,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 17),
-                          ),
-                          subtitle: Text(resultOfFileCreatedTime.toString()),
-                          trailing: IconButton(
-                              icon: Icon(Icons.offline_pin), onPressed: null),
-                        ),
+                            leading: Icon(
+                              IconData(iconOfFile, fontFamily: 'MaterialIcons'),
+                              size: 30.0,
+                              color: Color(iconColor),
+                            ),
+                            title: Text(
+                              fileName,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 17),
+                            ),
+                            subtitle: Text(resultOfFileCreatedTime.toString()),
+                            trailing: Icon(
+                              Icons.offline_pin,
+                              color: Color(downloadIconColor),
+                            )),
                       ),
                       onTap: () async {
                         bool isInternetOff =
                             await downloadFile1(storageReference, context);
                         if (isInternetOff) {
-                          showInSnackBar("You are Offline now");
+                          showInSnackBar("No connection");
                         }
                       },
                       onLongPress: () async {
@@ -641,7 +674,11 @@ class FilesSearch extends SearchDelegate {
 
   @override
   Widget buildResults(BuildContext context) {
-    return Container();
+    //TODO: If hit Search Button Then Show Subtitle and if possible to view Download button then Show it
+    List<DocumentSnapshot> results = dirs.documents
+        .where((a) => a.documentID.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+    return searchBodyBuilder(context, results, currentLocation);
   }
 
   @override
@@ -649,54 +686,54 @@ class FilesSearch extends SearchDelegate {
     List<DocumentSnapshot> results = dirs.documents
         .where((a) => a.documentID.toLowerCase().contains(query.toLowerCase()))
         .toList();
-    return globalBodyBuilder(context, results, currentLocation);
+    return searchBodyBuilder(context, results, currentLocation);
     // return ListView(
     // children: results.map<Widget>((a) => Text(a.documentID)).toList());
   }
 }
 
-String getConvertedTime(Timestamp timestamp) {
-  var now = DateTime.now();
-  var today = DateTime(now.year, now.month, now.day);
-  var yesterday = DateTime(now.year, now.month, now.day - 1);
-  var format = DateFormat.yMMMMd('en_US');
-  var date =
-      DateTime.fromMillisecondsSinceEpoch(timestamp.millisecondsSinceEpoch);
-  var diff = now.difference(date);
-  var time = '';
+// String getConvertedTime(Timestamp timestamp) {
+//   var now = DateTime.now();
+//   var today = DateTime(now.year, now.month, now.day);
+//   var yesterday = DateTime(now.year, now.month, now.day - 1);
+//   var format = DateFormat.yMMMMd('en_US');
+//   var date =
+//       DateTime.fromMillisecondsSinceEpoch(timestamp.millisecondsSinceEpoch);
+//   var diff = now.difference(date);
+//   var time = '';
 
-  final aDate = DateTime(date.year, date.month, date.day);
+//   final aDate = DateTime(date.year, date.month, date.day);
 
-  if (diff.inSeconds <= 0 ||
-      diff.inSeconds > 0 && diff.inMinutes == 0 ||
-      diff.inMinutes > 0 && diff.inHours == 0 ||
-      diff.inHours > 0 && diff.inDays == 0) {
-    if (aDate == today) {
-      time = "Today " + DateFormat('HH:mm').format(date);
-    } else if (aDate == yesterday) {
-      time = "Yesterday " + DateFormat('HH:mm').format(date);
-    }
-    // time = DateFormat('HH:mm a').format(date);
+//   if (diff.inSeconds <= 0 ||
+//       diff.inSeconds > 0 && diff.inMinutes == 0 ||
+//       diff.inMinutes > 0 && diff.inHours == 0 ||
+//       diff.inHours > 0 && diff.inDays == 0) {
+//     if (aDate == today) {
+//       time = "Today " + DateFormat('HH:mm').format(date);
+//     } else if (aDate == yesterday) {
+//       time = "Yesterday " + DateFormat('HH:mm').format(date);
+//     }
+//     // time = DateFormat('HH:mm a').format(date);
 
-  } else if (diff.inDays > 0 && diff.inDays < 7) {
-    if (diff.inDays == 1) {
-      time = diff.inDays.toString() + ' Day ago';
-    } else {
-      time = diff.inDays.toString() + ' Days ago';
-    }
-  } else {
-    if (diff.inDays == 7) {
-      time = (diff.inDays / 7).floor().toString() + ' Week ago';
-    } else {
-      time = format.format(date);
-    }
-  }
-  return time;
-}
+//   } else if (diff.inDays > 0 && diff.inDays < 7) {
+//     if (diff.inDays == 1) {
+//       time = diff.inDays.toString() + ' Day ago';
+//     } else {
+//       time = diff.inDays.toString() + ' Days ago';
+//     }
+//   } else {
+//     if (diff.inDays == 7) {
+//       time = (diff.inDays / 7).floor().toString() + ' Week ago';
+//     } else {
+//       time = format.format(date);
+//     }
+//   }
+//   return time;
+// }
 
-Widget globalBodyBuilder(
+Widget searchBodyBuilder(
     BuildContext context, List<DocumentSnapshot> dirs, String currentLocation) {
-  CrudMedthods crudObj = new CrudMedthods();
+  // CrudMedthods crudObj = new CrudMedthods();
 
   bool isFile(String nameOfFile) {
     if (nameOfFile.startsWith("zzz@"))
@@ -764,10 +801,10 @@ Widget globalBodyBuilder(
                   StorageReference storageReference = FirebaseStorage.instance
                       .ref()
                       .child(firebaseDatabaseLocation + "/" + fileName);
-                  Timestamp updatedTimeMillis =
-                      dirs[index].data["created_timestamp"];
-                  var resultOfFileCreatedTime =
-                      getConvertedTime(updatedTimeMillis);
+                  // Timestamp updatedTimeMillis =
+                  //     dirs[index].data["created_timestamp"];
+                  // var resultOfFileCreatedTime =
+                  //     getConvertedTime(updatedTimeMillis);
 
                   return Container(
                       // padding: EdgeInsets.all(7),
@@ -815,7 +852,7 @@ Widget globalBodyBuilder(
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(fontSize: 17),
                         ),
-                        subtitle: Text(resultOfFileCreatedTime.toString()),
+                        // subtitle: Text(resultOfFileCreatedTime.toString()),
                       ),
                     ),
                     onTap: () async {

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:path_provider/path_provider.dart';
 // import 'package:open_file/open_file.dart';
 // import 'package:path/path.dart';
 // import 'package:path_provider/path_provider.dart';
@@ -94,17 +95,27 @@ class CrudMedthods {
     return await Firestore.instance.collection(currentLocation).getDocuments();
   }
 
-  bool isDownloaded(String refName) {
-    // String fileName = await refName.getName();
-    var documentDirectory = getExternalStorageDirectory();
-    File filePath = new File(join(documentDirectory.path, fileName));
-    String finalFilePath =
-        filePath.toString().replaceAll("File: '", "").replaceAll("'", "");
-    if (await File(finalFilePath).exists()) {
-      return true;
-    } else
-      return false;
-  }
+//   bool isDownloaded(String refName) {
+//     _files() async {
+//        var documentDirectory = await getExternalStorageDirectory();
+//        var files = await File(root: documentDirectory).walk().toList();
 
-  getDownloadedFileNames() async {}
+//        for(var i = 0;i<files.length;i++) {
+//          print("${files[i].path} ");
+//        }
+//          return files;
+//      }
+
+  // String fileName = await refName.getName();
+  //   var documentDirectory = getExternalStorageDirectory();
+  //   File filePath = new File(join(documentDirectory.path, fileName));
+  //   String finalFilePath =
+  //       filePath.toString().replaceAll("File: '", "").replaceAll("'", "");
+  //   if (await File(finalFilePath).exists()) {
+  //     return true;
+  //   } else
+  //     return false;
+  // }
+
+  // getDownloadedFileNames() async {}
 }
