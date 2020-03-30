@@ -20,8 +20,10 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:progress_dialog/progress_dialog.dart';
 
-Future<void> downloadFile1(StorageReference ref) async {
+Future<void> downloadFile1(StorageReference ref, context) async {
   ProgressDialog pr;
+  pr = new ProgressDialog(context);
+  pr.style(message: 'Please wait...');
 
   // final String url = await ref.getDownloadURL();
   // final http.Response downloadData = await http.get(url);
@@ -318,7 +320,7 @@ class _InsideDirState extends State<InsideDir> {
                         ),
                       ),
                       onTap: () async {
-                        downloadFile1(storageReference);
+                        downloadFile1(storageReference, context);
                       },
                       onLongPress: () async {
                         // TODO : Delete file in ExternalStorage Also
@@ -786,7 +788,7 @@ Widget globalBodyBuilder(
                       ),
                     ),
                     onTap: () async {
-                      downloadFile1(storageReference);
+                      downloadFile1(storageReference, context);
                     },
                     // onLongPress: () async {
                     //   // TODO : Delete file in ExternalStorage Also
