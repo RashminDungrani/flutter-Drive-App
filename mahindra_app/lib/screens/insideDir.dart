@@ -384,6 +384,10 @@ class _InsideDirState extends State<InsideDir> {
                             await downloadFile1(storageReference, context);
                         if (isInternetOff) {
                           showInSnackBar("No connection");
+                        } else {
+                          setState(() {
+                            _listofFiles();
+                          });
                         }
                       },
                       onLongPress: () async {
@@ -549,8 +553,9 @@ class _InsideDirState extends State<InsideDir> {
       }
 
       uploadPDF() {
-        String fileExtension =
-            fileName.contains(".") ? fileName.split('.')[1] : "pdf";
+        String fileExtension = fileName.contains(".")
+            ? fileName.split('.')[fileName.split('.').length - 1]
+            : "pdf";
 
         final StorageUploadTask uploadTask = storageReference.putFile(
             File(filePath),
