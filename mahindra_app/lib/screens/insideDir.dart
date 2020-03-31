@@ -1,4 +1,4 @@
-//TODO: Check internet if Folder is Empty and if Internet is Off then Show Snackbar
+//TODO: Check internet if No items and if Internet is Off then Show Snackbar
 //TODO: Delete Files and Folder in FStorage inside Folder When Folder is delete
 //TODO: Show Simple Notify text At bottom like other Apps
 //TODO: Add Search Option of Files and Folders
@@ -20,6 +20,31 @@ import 'package:open_file/open_file.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:progress_dialog/progress_dialog.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+Future<bool> getPermissionStatus() async {
+  var status = await Permission.storage.status;
+  if (status.isGranted) {
+    return true;
+  } else if (status.isDenied) {
+    var status = await Permission.storage.request();
+    if (status.isGranted) {
+      return true;
+    } else {
+      return false;
+    }
+  } else if (status.isUndetermined) {
+    var status = await Permission.storage.request();
+    if (status.isGranted) {
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    openAppSettings();
+    return false;
+  }
+}
 
 Future<bool> downloadFile1(StorageReference ref, context) async {
   ProgressDialog pr;
@@ -84,37 +109,6 @@ class _InsideDirState extends State<InsideDir> {
   List downloadedFilePaths = new List();
   List<String> downloadedFileNames = [];
 
-  // Icon actionIcon = Icon(
-  //   Icons.search,
-  //   color: Colors.white,
-  // );
-  // final key = new GlobalKey<ScaffoldState>();
-  // final TextEditingController _searchQuery = new TextEditingController();
-  // List<String> _list;
-  // bool _isSearching;
-  // String _searchText = "";
-
-  // _InsideDirState() {
-  //   _searchQuery.addListener(() {
-  //     if (_searchQuery.text.isEmpty) {
-  //       setState(() {
-  //         _isSearching = false;
-  //         _searchText = "";
-  //       });
-  //     } else {
-  //       setState(() {
-  //         _isSearching = true;
-  //         _searchText = _searchQuery.text;
-  //       });
-  //     }
-  //   });
-  // }
-
-  // String _extension;
-  // FileType _pickType = FileType.custom;
-  // GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
-  // List<StorageUploadTask> _tasks = <StorageUploadTask>[];
-
   @override
   initState() {
     crudObj.getData(widget.currentLocation).then((results) {
@@ -125,7 +119,6 @@ class _InsideDirState extends State<InsideDir> {
     });
 
     _listofFiles();
-
     super.initState();
   }
 
@@ -380,14 +373,19 @@ class _InsideDirState extends State<InsideDir> {
                             )),
                       ),
                       onTap: () async {
-                        bool isInternetOff =
-                            await downloadFile1(storageReference, context);
-                        if (isInternetOff) {
-                          showInSnackBar("No connection");
+                        bool isStatusTrue = await getPermissionStatus();
+                        if (isStatusTrue) {
+                          bool isInternetOff =
+                              await downloadFile1(storageReference, context);
+                          if (isInternetOff) {
+                            showInSnackBar("No connection");
+                          } else {
+                            setState(() {
+                              _listofFiles();
+                            });
+                          }
                         } else {
-                          setState(() {
-                            _listofFiles();
-                          });
+                          showInSnackBar("No permission");
                         }
                       },
                       onLongPress: () async {
@@ -490,9 +488,25 @@ class _InsideDirState extends State<InsideDir> {
           );
         } else {
           return Center(
-              child: Text(
-            "Folder is empty",
-            style: TextStyle(fontSize: 16),
+              child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.only(bottom: 20),
+                child: Icon(
+                  Icons.no_sim,
+                  size: 100,
+                  color: Colors.blueGrey,
+                ),
+              ),
+              Text(
+                "No items",
+                style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.blueGrey),
+              ),
+            ],
           ));
         }
       } else {
@@ -940,9 +954,25 @@ Widget searchBodyBuilder(
       return Scaffold(
         backgroundColor: Colors.blueGrey[100],
         body: Center(
-            child: Text(
-          "Folder is empty",
-          style: TextStyle(fontSize: 16),
+            child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.only(bottom: 20),
+              child: Icon(
+                Icons.no_sim,
+                size: 100,
+                color: Colors.blueGrey,
+              ),
+            ),
+            Text(
+              "No items",
+              style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.blueGrey),
+            ),
+          ],
         )),
       );
     }
