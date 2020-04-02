@@ -11,6 +11,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:mahindra_app/services/crud.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:file_picker/file_picker.dart';
@@ -118,8 +119,8 @@ class _InsideDirState extends State<InsideDir> {
       });
     });
 
-    _listofFiles();
     super.initState();
+    _listofFiles();
   }
 
   void _listofFiles() async {
@@ -133,7 +134,23 @@ class _InsideDirState extends State<InsideDir> {
       fileName = fileName?.split("/")?.last.toString().replaceAll("'", "");
       downloadedFileNames.add(fileName);
     }
+    // String formatBytes(int bytes) {
+    //   var units = ['B', 'KB', 'MB', 'GB', 'TB'];
+
+    //   int bytes = [bytes, 0];
+    //   var pow = ((bytes ? bytes : 0) / 1024).floor();
+    //   pow = [pow, units.length - 1].reduce(max);
+
+    //   // Uncomment one of the following alternatives
+    //   // $bytes /= pow(1024, $pow);
+    //   // $bytes /= (1 << (10 * $pow));
+
+    //   return (bytes).round().toString() + ' ' + units[pow];
+    // }
+
     // print(downloadedFileNames);
+
+    // print(downloadedFileSizes[0]);
   }
 
   Widget build(BuildContext context) {
@@ -161,7 +178,8 @@ class _InsideDirState extends State<InsideDir> {
 
     _onAdd() {
       crudObj
-          .addFolder(widget.currentLocation, _textFieldController.text, false)
+          .addFolder(
+              widget.currentLocation, _textFieldController.text, "0", false)
           .then((results) {
         initState();
       });
@@ -244,7 +262,7 @@ class _InsideDirState extends State<InsideDir> {
 
     Widget bodyBuilder(BuildContext context) {
       bool isFile(String nameOfFile) {
-        if (nameOfFile.startsWith("zzz@"))
+        if (nameOfFile.startsWith("XzX@"))
           return true;
         else
           return false;
@@ -252,29 +270,29 @@ class _InsideDirState extends State<InsideDir> {
 
       List<String> widgetOfFile(fileName) {
         List<String> fileWidget = [];
-        if (fileName.startsWith("zzz@PDF_")) {
-          String renamedFileName = fileName.replaceAll("zzz@PDF_", "");
+        if (fileName.startsWith("XzX@PDF_")) {
+          String renamedFileName = fileName.replaceAll("XzX@PDF_", "");
           fileWidget.add(renamedFileName + ".pdf");
           fileWidget.add("0xe415"); // picture_as_pdf
           fileWidget.add("0xffff0000"); // red color
 
           return fileWidget;
-        } else if (fileName.startsWith("zzz@xls_")) {
-          String renamedFileName = fileName.replaceAll("zzz@xls_", "");
+        } else if (fileName.startsWith("XzX@xls_")) {
+          String renamedFileName = fileName.replaceAll("XzX@xls_", "");
           fileWidget.add(renamedFileName + ".xls");
           fileWidget.add("0xe873");
           fileWidget.add("0xff4caf50");
 
           return fileWidget;
-        } else if (fileName.startsWith("zzz@xlsx_")) {
-          String renamedFileName = fileName.replaceAll("zzz@xlsx_", "");
+        } else if (fileName.startsWith("XzX@xlsx_")) {
+          String renamedFileName = fileName.replaceAll("XzX@xlsx_", "");
           fileWidget.add(renamedFileName + ".xlsx");
           fileWidget.add("0xe873");
           fileWidget.add("0xff4caf50");
 
           return fileWidget;
         } else {
-          String renamedFileName = fileName.replaceAll("zzz@z_", "");
+          String renamedFileName = fileName.replaceAll("XzX@z_", "");
           String fileExtension =
               renamedFileName.substring(0, renamedFileName.lastIndexOf('^^'));
           renamedFileName =
@@ -321,164 +339,166 @@ class _InsideDirState extends State<InsideDir> {
 
                     int downloadIconColor = getDownloadedColor(fileName);
                     return Container(
-                        // padding: EdgeInsets.all(7),
-                        child: InkWell(
-                      // ! Previous Code of Grid View
-                      // child: Row(
-                      //   children: <Widget>[
-                      //     Padding(
-                      //       padding: const EdgeInsets.only(left: 13.0),
-                      //       child: Icon(
-                      //         Icons.picture_as_pdf,
-                      //         color: Colors.red,
-                      //         size: 30.0,
-                      //       ),
-                      //     ),
-                      //     Flexible(
-                      //       child: Container(
-                      //         child: Padding(
-                      //           padding: const EdgeInsets.only(left: 8.0),
-                      //           child: Text(
-                      //             pdfFileName,
-                      //             overflow: TextOverflow.ellipsis,
-                      //             style: TextStyle(fontSize: 19),
-                      //           ),
-                      //         ),
-                      //       ),
-                      //     ),
-                      //   ],
-                      // ),
+                      // padding: EdgeInsets.all(7),
+                      child: InkWell(
+                        // * File View
+                        child: Slidable(
+                            actionPane: SlidableDrawerActionPane(),
+                            actionExtentRatio: 0.25,
+                            child: Container(
+                              child: Card(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6.0),
+                                ),
+                                color: Color(0xfff0f3f4),
+                                child: ListTile(
+                                    // Icon(
+                                    //     IconData(iconOfFile, fontFamily: 'MaterialIcons'),
+                                    //     size: 30.0,
+                                    //     color: Color(iconColor),
+                                    //   ),
+                                    leading: CircleAvatar(
+                                      backgroundColor: Color(iconColor),
+                                      child: Icon(IconData(iconOfFile,
+                                          fontFamily: 'MaterialIcons')),
+                                      foregroundColor: Colors.white,
+                                    ),
+                                    title: Text(
+                                      fileName,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(fontSize: 17),
+                                    ),
+                                    subtitle: Text(dirs.documents[index]
+                                            .data["file_size"] +
+                                        "  " +
+                                        resultOfFileCreatedTime.toString()),
+                                    trailing: Icon(
+                                      Icons.offline_pin,
+                                      color: Color(downloadIconColor),
+                                    )),
+                              ),
+                            ),
+                            secondaryActions: <Widget>[
+                              IconSlideAction(
+                                  caption: 'Delete',
+                                  color: Colors.red,
+                                  icon: Icons.delete,
+                                  // Delete from External Storage and remove item from fileNames
+                                  onTap: () async {
+                                    showInSnackBar("$fileName is Deleted");
+                                    storageReference.delete();
+                                    print("Deleting");
+                                    crudObj
+                                        .deleteFolder(widget.currentLocation,
+                                            currentDocumentId)
+                                        .then((results) async {});
+                                    var documentDirectory =
+                                        await getExternalStorageDirectory();
+                                    File createNewFile = new File(
+                                        join(documentDirectory.path, fileName));
 
-                      // * File View
-                      child: Card(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6.0),
-                        ),
-                        color: Color(0xfff0f3f4),
-                        child: ListTile(
-                            leading: Icon(
-                              IconData(iconOfFile, fontFamily: 'MaterialIcons'),
-                              size: 30.0,
-                              color: Color(iconColor),
-                            ),
-                            title: Text(
-                              fileName,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 17),
-                            ),
-                            subtitle: Text(resultOfFileCreatedTime.toString()),
-                            trailing: Icon(
-                              Icons.offline_pin,
-                              color: Color(downloadIconColor),
-                            )),
-                      ),
-                      onTap: () async {
-                        bool isStatusTrue = await getPermissionStatus();
-                        if (isStatusTrue) {
-                          bool isInternetOff =
-                              await downloadFile1(storageReference, context);
-                          if (isInternetOff) {
-                            showInSnackBar("No connection");
+                                    if (createNewFile.existsSync()) {
+                                      String locationOfDeleteFile =
+                                          createNewFile
+                                              .toString()
+                                              .replaceAll("File: '", "")
+                                              .replaceAll("'", "");
+                                      final deleteFile =
+                                          File(locationOfDeleteFile);
+                                      deleteFile.deleteSync(recursive: true);
+                                    }
+                                    // setState(() {
+                                    //   dirs.documents
+                                    //       .remove(locationOfDeleteFile);
+                                    // });
+                                    initState();
+                                  }),
+                            ]),
+                        onTap: () async {
+                          bool isStatusTrue = await getPermissionStatus();
+                          if (isStatusTrue) {
+                            bool isInternetOff =
+                                await downloadFile1(storageReference, context);
+                            if (isInternetOff) {
+                              showInSnackBar("No connection");
+                            } else {
+                              setState(() {
+                                _listofFiles();
+                              });
+                            }
                           } else {
-                            setState(() {
-                              _listofFiles();
-                            });
+                            showInSnackBar("No permission");
                           }
-                        } else {
-                          showInSnackBar("No permission");
-                        }
-                      },
-                      onLongPress: () async {
-                        // TODO : Delete file in ExternalStorage Also
-
-                        storageReference.delete();
-                        print("Deleting");
-                        crudObj
-                            .deleteFolder(
-                                widget.currentLocation, currentDocumentId)
-                            .then((results) {
-                          print("Folder File");
-                          initState();
-                        });
-                      },
-                    ));
+                        },
+                      ),
+                    );
                   } else {
                     return Container(
                       // padding: EdgeInsets.all(7),
                       child: InkWell(
-                        // ! Previous Code of Grid View
-                        // child: Row(
-                        //   children: <Widget>[
-                        //     Padding(
-                        //       padding: const EdgeInsets.only(left: 13.0),
-                        //       child: Icon(
-                        //         Icons.folder,
-                        //         color: Colors.blueGrey,
-                        //         size: 30.0,
-                        //       ),
-                        //     ),
-                        //     Flexible(
-                        //       child: Container(
-                        //         child: Padding(
-                        //           padding: const EdgeInsets.only(left: 8.0),
-                        //           child: Text(
-                        //             (dirs.documents[index].documentID),
-                        //             overflow: TextOverflow.ellipsis,
-                        //             style: TextStyle(fontSize: 19),
-                        //           ),
-                        //         ),
-                        //       ),
-                        //     ),
-                        //   ],
-                        // ),
-
                         // * Directory View
-                        child: Card(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.0),
-                          ),
-                          color: Color(0xfff0f3f4),
-                          child: ListTile(
-                            leading: Icon(
-                              Icons.folder,
-                              color: Colors.blueGrey,
-                              size: 30.0,
-                            ),
-                            title: Text(
-                              dirs.documents[index].documentID,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 19,
+                        child: Slidable(
+                            actionPane: SlidableDrawerActionPane(),
+                            actionExtentRatio: 0.25,
+                            child: Container(
+                              child: Card(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                ),
+                                color: Color(0xfff0f3f4),
+                                child: ListTile(
+                                  leading: Icon(
+                                    Icons.folder,
+                                    color: Colors.blueGrey,
+                                    size: 30.0,
+                                  ),
+                                  title: Text(
+                                    dirs.documents[index].documentID,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 19,
+                                    ),
+                                  ),
+                                  trailing: Icon(Icons.keyboard_arrow_right),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => InsideDir(
+                                          dirName:
+                                              '${dirs.documents[index].documentID}',
+                                          currentLocation: widget
+                                                  .currentLocation +
+                                              '/${dirs.documents[index].documentID}' +
+                                              '/collection',
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
                               ),
                             ),
-                            trailing: Icon(Icons.keyboard_arrow_right),
-                          ),
-                        ),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => InsideDir(
-                                dirName: '${dirs.documents[index].documentID}',
-                                currentLocation: widget.currentLocation +
-                                    '/${dirs.documents[index].documentID}' +
-                                    '/collection',
-                              ),
-                            ),
-                          );
-                        },
-                        onLongPress: () {
-                          // TODO: Delete This Folder in F Storage and try to delete All sub Directory from database
-                          print("Deleting");
-                          showInSnackBar(
-                              "${dirs.documents[index].documentID} is Deleted");
-                          crudObj
-                              .deleteFolder(widget.currentLocation,
-                                  '${dirs.documents[index].documentID}')
-                              .then((results) {
-                            initState();
-                          });
-                        },
+                            secondaryActions: <Widget>[
+                              IconSlideAction(
+                                  caption: 'Delete',
+                                  color: Colors.red,
+                                  icon: Icons.delete,
+                                  // Delete from External Storage and remove item from fileNames
+                                  onTap: () async {
+                                    // TODO: Delete This Folder in F Storage and try to delete All sub Directory from database
+
+                                    showInSnackBar(
+                                        "$currentDocumentId is Deleted");
+                                    crudObj
+                                        .deleteFolder(widget.currentLocation,
+                                            currentDocumentId)
+                                        .then((results) {
+                                      initState();
+                                    });
+
+                                    initState();
+                                  }),
+                            ]),
                       ),
                     );
                   }
@@ -541,7 +561,12 @@ class _InsideDirState extends State<InsideDir> {
       body: bodyBuilder(context),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          openFileExplorer();
+          bool isGrated = await getPermissionStatus();
+          if (isGrated) {
+            openFileExplorer();
+          } else {
+            showInSnackBar("No permission");
+          }
         },
         child: Icon(Icons.file_upload),
         tooltip: "Upload Files",
@@ -558,9 +583,36 @@ class _InsideDirState extends State<InsideDir> {
           .ref()
           .child(firebaseDatabaseLocation + "/" + fileName);
 
+      String formatFileSize(int size) {
+        String hrSize;
+        double b = size.toDouble();
+        double k = size / 1024.0;
+        double m = ((size / 1024.0) / 1024.0);
+        // double g = (((size / 1024.0) / 1024.0) / 1024.0);
+        // double t = ((((size / 1024.0) / 1024.0) / 1024.0) / 1024.0);
+        final dec = new NumberFormat("0.00");
+        final kbDec = new NumberFormat("0");
+// if (t > 1) {
+//         hrSize = dec.format(t) + " TB";
+//       } else if (g > 1) {
+//         hrSize = dec.format(g) + " GB";
+//       } else
+        if (m > 1) {
+          hrSize = dec.format(m) + " MB";
+        } else if (k > 1) {
+          hrSize = kbDec.format(k) + " kB";
+        } else {
+          hrSize = kbDec.format(b) + " bytes";
+        }
+        return hrSize;
+      }
+
+      print("zzzzzz" + filePath);
+      String fileSize = formatFileSize(File(filePath).lengthSync());
+
       _onPDFAdd(String documentFileName) {
         crudObj
-            .addFolder(widget.currentLocation, documentFileName, true)
+            .addFolder(widget.currentLocation, documentFileName, fileSize, true)
             .then((_) {
           initState();
         });
@@ -583,14 +635,14 @@ class _InsideDirState extends State<InsideDir> {
               : fileName;
           String documentFileName = "";
           if (fileExtension == "pdf") {
-            documentFileName = "zzz@PDF_" + fileNameWithoutExtension;
+            documentFileName = "XzX@PDF_" + fileNameWithoutExtension;
           } else if (fileExtension == "xls") {
-            documentFileName = "zzz@xls_" + fileNameWithoutExtension;
+            documentFileName = "XzX@xls_" + fileNameWithoutExtension;
           } else if (fileExtension == "xlsx") {
-            documentFileName = "zzz@xlsx_" + fileNameWithoutExtension;
+            documentFileName = "XzX@xlsx_" + fileNameWithoutExtension;
           } else {
             documentFileName =
-                "zzz@z_" + fileExtension + "^^" + fileNameWithoutExtension;
+                "XzX@z_" + fileExtension + "^^" + fileNameWithoutExtension;
           }
           _onPDFAdd(documentFileName);
           pr.hide();
@@ -755,7 +807,7 @@ Widget searchBodyBuilder(
   // CrudMedthods crudObj = new CrudMedthods();
 
   bool isFile(String nameOfFile) {
-    if (nameOfFile.startsWith("zzz@"))
+    if (nameOfFile.startsWith("XzX@"))
       return true;
     else
       return false;
@@ -763,29 +815,29 @@ Widget searchBodyBuilder(
 
   List<String> widgetOfFile(fileName) {
     List<String> fileWidget = [];
-    if (fileName.startsWith("zzz@PDF_")) {
-      String renamedFileName = fileName.replaceAll("zzz@PDF_", "");
+    if (fileName.startsWith("XzX@PDF_")) {
+      String renamedFileName = fileName.replaceAll("XzX@PDF_", "");
       fileWidget.add(renamedFileName + ".pdf");
       fileWidget.add("0xe415"); // picture_as_pdf
       fileWidget.add("0xffff0000"); // red color
 
       return fileWidget;
-    } else if (fileName.startsWith("zzz@xls_")) {
-      String renamedFileName = fileName.replaceAll("zzz@xls_", "");
+    } else if (fileName.startsWith("XzX@xls_")) {
+      String renamedFileName = fileName.replaceAll("XzX@xls_", "");
       fileWidget.add(renamedFileName + ".xls");
       fileWidget.add("0xe873");
       fileWidget.add("0xff4caf50");
 
       return fileWidget;
-    } else if (fileName.startsWith("zzz@xlsx_")) {
-      String renamedFileName = fileName.replaceAll("zzz@xlsx_", "");
+    } else if (fileName.startsWith("XzX@xlsx_")) {
+      String renamedFileName = fileName.replaceAll("XzX@xlsx_", "");
       fileWidget.add(renamedFileName + ".xlsx");
       fileWidget.add("0xe873");
       fileWidget.add("0xff4caf50");
 
       return fileWidget;
     } else {
-      String renamedFileName = fileName.replaceAll("zzz@z_", "");
+      String renamedFileName = fileName.replaceAll("XzX@z_", "");
       String fileExtension =
           renamedFileName.substring(0, renamedFileName.lastIndexOf('^^'));
       renamedFileName =
