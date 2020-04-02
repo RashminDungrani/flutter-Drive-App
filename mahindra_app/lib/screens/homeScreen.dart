@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mahindra_app/screens/downloadFilesScreen.dart';
 import 'package:mahindra_app/screens/insideDir.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -32,10 +33,19 @@ class _HomeScreenState extends State<HomeScreen> {
         appBar: AppBar(
           title: Text('Manuals'),
           actions: <Widget>[
-            // Padding(
-            //   padding: const EdgeInsets.only(right: 10.0),
-            //   child: Icon(Icons.search),
-            // )
+            new IconButton(
+                icon: new Icon(
+                  Icons.file_download,
+                  color: Colors.white,
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DownloadedFiles(),
+                    ),
+                  );
+                })
           ],
         ),
         backgroundColor: Colors.blueGrey[100],
@@ -48,40 +58,43 @@ class _HomeScreenState extends State<HomeScreen> {
               controller: new ScrollController(keepScrollOffset: false),
               shrinkWrap: true,
               children: List.generate(_manualsList.length, (index) {
-                return InkWell(
-                    child: Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15.0),
-                      ),
-                      color: Colors.blueGrey[600],
-                      child: Center(
-                        child: Text(
-                          ('${_manualsList1[index]}'),
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 25.0,
-                              fontWeight: FontWeight.w500,
-                              letterSpacing: 0.8),
+                return Hero(
+                  tag: '${_manualsList1[index]}',
+                  child: InkWell(
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15.0),
                         ),
-                      ),
-                    ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => InsideDir(
-                            dirName: '${_manualsList[index]}',
-                            currentLocation:
-                                "Folders/${_manualsList[index]}/collection",
+                        color: Colors.blueGrey[600],
+                        child: Center(
+                          child: Text(
+                            ('${_manualsList1[index]}'),
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 25.0,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 0.8),
                           ),
-                          // Pass the arguments as part of the RouteSettings. The
-                          // DetailScreen reads the arguments from these settings.
-                          // settings: RouteSettings(
-                          //   arguments: index,
-                          // ),
                         ),
-                      );
-                    });
+                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => InsideDir(
+                              dirName: '${_manualsList[index]}',
+                              currentLocation:
+                                  "Folders/${_manualsList[index]}/collection",
+                            ),
+                            // Pass the arguments as part of the RouteSettings. The
+                            // DetailScreen reads the arguments from these settings.
+                            // settings: RouteSettings(
+                            //   arguments: index,
+                            // ),
+                          ),
+                        );
+                      }),
+                );
               }),
             ),
           ),
