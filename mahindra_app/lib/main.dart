@@ -21,11 +21,14 @@ class MyApp extends StatelessWidget {
         MaterialApp(
       title: 'Manuals',
       theme: ThemeData(
-          primarySwatch: Colors.blueGrey,
-          pageTransitionsTheme: PageTransitionsTheme(builders: {
+        primarySwatch: Colors.blueGrey,
+        pageTransitionsTheme: PageTransitionsTheme(
+          builders: {
             TargetPlatform.android: CupertinoPageTransitionsBuilder(),
             TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-          })),
+          },
+        ),
+      ),
       home: HomeScreen(),
       debugShowCheckedModeBanner: false,
     );

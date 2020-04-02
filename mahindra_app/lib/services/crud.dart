@@ -64,13 +64,14 @@ class CrudMedthods {
 // // file.writeAsBytesSync(response.bodyBytes);
 //   }
 
-  Future<void> addFolder(
-      String currentLocation, String createDirName, bool isFile) async {
+  Future<void> addFolder(String currentLocation, String createDirName,
+      String fileSize, bool isFile) async {
     if (isFile) {
       Firestore.instance
           .collection(currentLocation)
           .document(createDirName)
-          .setData({"created_timestamp": Timestamp.now()});
+          .setData(
+              {"created_timestamp": Timestamp.now(), "file_size": fileSize});
     } else {
       Firestore.instance
           .collection(currentLocation)
