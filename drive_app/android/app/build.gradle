@@ -38,7 +38,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId "com.example.drive"
+        applicationId "com.example.drive" //TODO: Specify your app name as firebase project name and add google-services.json file into android/app/
         minSdkVersion 21
         targetSdkVersion 28
         versionCode flutterVersionCode.toInteger()

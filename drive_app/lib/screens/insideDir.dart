@@ -1,10 +1,5 @@
-//TODO: Check internet if No items and if Internet is Off then Show Snackbar
-//TODO: Delete Files and Folder in FStorage inside Folder When Folder is delete
-//TODO: Show Simple Notify text At bottom like other Apps
-//TODO: Add Search Option of Files and Folders
 //TODO: onLongPress Show Alert Box "Are you Sure" and then delete file or Folder if input is yes (true)
 //TODO: Pull Down To refresh
-//TODO: Delete Files and Folder using Swipe Right to left and Tap on Delete Button(red color) To Delete that file or folder
 
 import 'dart:io';
 
